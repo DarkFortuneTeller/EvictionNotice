@@ -1,0 +1,186 @@
+EvictionNoticeMessageBackground.AvailableTexture:
+  $type: gamedataUIIcon_Record
+  atlasPartName: available
+  atlasResourcePath: eviction_notice\screens\apartment_screen_icons.inkatlas
+
+EvictionNoticeScreenMessages.RentDue:
+  $type: gamedataScreenMessageData_Record
+  autoScroll: True
+  backgroundOpacity: 1
+  backgroundTextureID: MessageBackground.RentPaidTexture
+  bottomMargin: 0
+  fontPath: ''
+  fontSize: 80
+  friendlyName: RentDue
+  leftMargin: 0
+  rightMargin: 0
+  scrollSpeed: 0.800000012
+  topMargin: 0
+  backgroundColor:
+    - 216
+    - 216
+    - 38
+    - 1
+  localizedDescription: l"EvictionNotice_Screen_RentDue"
+  localizedName: LocKey#18510
+  textColor:
+    - 255
+    - 255
+    - 0
+    - 1
+
+EvictionNoticeScreenMessages.Available:
+  $type: gamedataScreenMessageData_Record
+  autoScroll: True
+  backgroundOpacity: 1
+  backgroundTextureID: EvictionNoticeMessageBackground.AvailableTexture
+  bottomMargin: 0
+  fontPath: ''
+  fontSize: 80
+  friendlyName: Available
+  leftMargin: 0
+  rightMargin: 0
+  scrollSpeed: 0.800000012
+  topMargin: 0
+  backgroundColor:
+    - 77
+    - 230
+    - 255
+    - 1
+  localizedDescription: l"EvictionNotice_Screen_UnitAvailable"
+  localizedName: LocKey#18510
+  textColor:
+    - 77
+    - 230
+    - 255
+    - 1
+
+EvictionNoticeScreenMessages.MotelRoomEvicted:
+  $type: gamedataScreenMessageData_Record
+  autoScroll: True
+  backgroundOpacity: 1
+  backgroundTextureID: MessageBackground.EvictionNoticeTexture
+  bottomMargin: 0
+  fontPath: ''
+  fontSize: 100
+  fontStyle: Bold
+  friendlyName: EvictionNotice
+  leftMargin: 0
+  rightMargin: 0
+  scrollSpeed: 0.800000012
+  topMargin: 0
+  backgroundColor:
+    - 216
+    - 38
+    - 38
+    - 1
+  localizedDescription: l"EvictionNotice_Screen_EvictedMotel"
+  textColor:
+    - 255
+    - 0
+    - 0
+    - 1
+
+EvictionNoticeScreenMessages.MotelRoomRentPaid:
+  $type: gamedataScreenMessageData_Record
+  autoScroll: True
+  backgroundOpacity: 1
+  backgroundTextureID: MessageBackground.RentPaidTexture
+  bottomMargin: 0
+  fontPath: ''
+  fontSize: 100
+  fontStyle: Bold
+  friendlyName: RentPaid
+  leftMargin: 0
+  rightMargin: 0
+  scrollSpeed: 0.800000012
+  topMargin: 0
+  backgroundColor:
+    - 0
+    - 255
+    - 0
+    - 1
+  localizedDescription: l"EvictionNotice_Screen_PaidMotel"
+  textColor:
+    - 0
+    - 128
+    - 0
+    - 1
+
+EvictionNoticeScreenMessages.MotelRoomRentDue:
+  $type: gamedataScreenMessageData_Record
+  autoScroll: True
+  backgroundOpacity: 1
+  backgroundTextureID: MessageBackground.RentPaidTexture
+  bottomMargin: 0
+  fontPath: ''
+  fontSize: 100
+  fontStyle: Bold
+  friendlyName: RentDue
+  leftMargin: 0
+  rightMargin: 0
+  scrollSpeed: 0.800000012
+  topMargin: 0
+  backgroundColor:
+    - 216
+    - 216
+    - 38
+    - 1
+  localizedDescription: l"EvictionNotice_Screen_DueMotel"
+  textColor:
+    - 255
+    - 255
+    - 0
+    - 1
+
+EvictionNoticeScreenMessages.MotelRoomRentOverdue:
+  $type: gamedataScreenMessageData_Record
+  autoScroll: True
+  backgroundOpacity: 1
+  backgroundTextureID: MessageBackground.RentOverdueTexture
+  bottomMargin: 0
+  fontPath: ''
+  fontSize: 100
+  fontStyle: Bold
+  friendlyName: RentOverdue
+  leftMargin: 0
+  rightMargin: 0
+  scrollSpeed: 0.800000012
+  topMargin: 0
+  backgroundColor:
+    - 216
+    - 216
+    - 38
+    - 1
+  localizedDescription: l"EvictionNotice_Screen_OverdueMotel"
+  textColor:
+    - 255
+    - 255
+    - 0
+    - 1
+
+EvictionNoticeScreenMessages.MotelRoomAvailable:
+  $type: gamedataScreenMessageData_Record
+  autoScroll: True
+  backgroundOpacity: 1
+  backgroundTextureID: EvictionNoticeMessageBackground.AvailableTexture
+  bottomMargin: 0
+  fontPath: ''
+  fontSize: 100
+  friendlyName: Available
+  leftMargin: 0
+  rightMargin: 0
+  scrollSpeed: 0.800000012
+  topMargin: 0
+  backgroundColor:
+    - 77
+    - 230
+    - 255
+    - 1
+  localizedDescription: l"EvictionNotice_Screen_AvailableMotel"
+  localizedName: EvictionNotice_Screen_AvailableMotel
+  textColor:
+    - 77
+    - 230
+    - 255
+    - 1

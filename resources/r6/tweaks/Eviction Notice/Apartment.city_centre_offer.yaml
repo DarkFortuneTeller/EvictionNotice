@@ -1,0 +1,5 @@
+Apartment.city_centre_offer:
+  $type: gamedataPurchaseOffer_Record
+  name: LocKey#80746
+  previewImage: UIJournalIcons.apartment_purchase_city_center
+  price: EconomicAssignment.vs_apartment_dlc6_apart_cct_dtn

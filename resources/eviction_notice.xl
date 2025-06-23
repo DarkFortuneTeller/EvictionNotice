@@ -1,0 +1,61 @@
+localization:
+  onscreens:
+    en-us: eviction_notice\localization\en-us\onscreens\eviction_notice.json
+  subtitles:
+    en-us: eviction_notice\localization\en-us\subtitles\eviction_notice_subtitles_map.json
+
+journal:
+  - eviction_notice\journal\eviction_notice.journal
+
+# New Game+ Support
+resource:
+  scope:
+    en_combined_scope.quest:
+      - cyberpunk2077.quest
+      - mod\quest\newgameplus.quest
+      - mod\quest\newgameplus_q001.quest
+      - mod\quest\newgameplus_standalone.quest
+
+quest:
+  phases:
+    - path: eviction_notice\quest\new_game_experience.questphase
+      parent: en_combined_scope.quest
+    - path: eviction_notice\quest\moveout\megabuildingh10_moveout.questphase
+      parent: en_combined_scope.quest
+    - path: eviction_notice\quest\moveout\northside_moveout.questphase
+      parent: en_combined_scope.quest
+    - path: eviction_notice\quest\moveout\japantown_moveout.questphase
+      parent: en_combined_scope.quest
+    - path: eviction_notice\quest\moveout\glen_moveout.questphase
+      parent: en_combined_scope.quest
+    - path: eviction_notice\quest\moveout\corpoplaza_moveout.questphase
+      parent: en_combined_scope.quest
+    - path: eviction_notice\quest\welcome\megabuildingh10_welcome.questphase
+      parent: en_combined_scope.quest
+    - path: eviction_notice\quest\welcome\northside_welcome.questphase
+      parent: en_combined_scope.quest
+    - path: eviction_notice\quest\welcome\japantown_welcome.questphase
+      parent: en_combined_scope.quest
+    - path: eviction_notice\quest\welcome\glen_welcome.questphase
+      parent: en_combined_scope.quest
+    - path: eviction_notice\quest\welcome\corpoplaza_welcome.questphase
+      parent: en_combined_scope.quest
+    - path: eviction_notice\quest\billpay_messages.questphase
+      parent: en_combined_scope.quest
+    - path: eviction_notice\quest\screenproximity\glen_screenproximity.questphase
+      parent: en_combined_scope.quest
+    - path: eviction_notice\quest\screenproximity\corpoplaza_screenproximity.questphase
+      parent: en_combined_scope.quest
+    - path: eviction_notice\quest\screenproximity\corpoplaza_npc_screenproximity.questphase
+      parent: en_combined_scope.quest
+
+
+ # MBH10 Post-Rescue Message
+ #   - path: eviction_notice\quest\megabuildingh10_new_game_message.questphase
+ #     parent: base\quest\main_quests\prologue\q001\phases\q001_apartment.questphase
+ #     input:
+ #       node: [259]
+ #       socket: "Out"
+ #     output:
+ #       node: [282]
+ #       socket: "In"

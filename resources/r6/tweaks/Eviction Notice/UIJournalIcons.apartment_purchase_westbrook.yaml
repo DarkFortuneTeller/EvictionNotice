@@ -1,0 +1,4 @@
+UIJournalIcons.apartment_purchase_westbrook:
+  $type: gamedataJournalIcon_Record
+  atlasPartName: apr_westbrook
+  atlasResourcePath: base\gameplay\gui\world\internet\templates\apartments\ezestate_atlas.inkatlas

@@ -1,0 +1,54 @@
+EvictionNoticeUIPhoneImageMessages.ezbob:
+  $type: gamedataJournalIcon_Record
+  atlasPartName: agent
+  atlasResourcePath: base\gameplay\gui\world\internet\templates\apartments\ezestate_atlas.inkatlas
+
+EvictionNoticeUIPhoneImageMessages.avery_intro:
+  $type: gamedataJournalIcon_Record
+  atlasPartName: avery_intro
+  atlasResourcePath: eviction_notice\textimages\textimages.inkatlas
+
+EvictionNoticeUIPhoneImageMessages.sylvia_intro:
+  $type: gamedataJournalIcon_Record
+  atlasPartName: sylvia_intro
+  atlasResourcePath: eviction_notice\textimages\textimages.inkatlas
+
+EvictionNoticeUIPhoneImageMessages.hinoki_intro:
+  $type: gamedataJournalIcon_Record
+  atlasPartName: hinoki_intro
+  atlasResourcePath: eviction_notice\textimages\textimages.inkatlas
+
+EvictionNoticeUIPhoneImageMessages.petro_intro:
+  $type: gamedataJournalIcon_Record
+  atlasPartName: petro_intro
+  atlasResourcePath: eviction_notice\textimages\textimages.inkatlas
+
+EvictionNoticePhoneAvatars.Avatar_EZBob:
+  $type: gamedataUIIcon_Record
+  atlasPartName: ezbob
+  atlasResourcePath: eviction_notice\avatars\en_avatars.inkatlas
+
+EvictionNoticePhoneAvatars.Avatar_Avery:
+  $type: gamedataUIIcon_Record
+  atlasPartName: avery
+  atlasResourcePath: eviction_notice\avatars\en_avatars.inkatlas
+
+EvictionNoticePhoneAvatars.Avatar_Petro:
+  $type: gamedataUIIcon_Record
+  atlasPartName: petro
+  atlasResourcePath: eviction_notice\avatars\en_avatars.inkatlas
+
+EvictionNoticePhoneAvatars.Avatar_Hinoki:
+  $type: gamedataUIIcon_Record
+  atlasPartName: hinoki
+  atlasResourcePath: eviction_notice\avatars\en_avatars.inkatlas
+
+EvictionNoticePhoneAvatars.Avatar_Sylvia:
+  $type: gamedataUIIcon_Record
+  atlasPartName: sylvia
+  atlasResourcePath: eviction_notice\avatars\en_avatars.inkatlas
+
+EvictionNoticePhoneAvatars.Avatar_Williams:
+  $type: gamedataUIIcon_Record
+  atlasPartName: williams
+  atlasResourcePath: eviction_notice\avatars\en_avatars.inkatlas

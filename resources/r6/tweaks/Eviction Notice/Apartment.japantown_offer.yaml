@@ -1,0 +1,5 @@
+Apartment.japantown_offer:
+  $type: gamedataPurchaseOffer_Record
+  name: LocKey#80749
+  previewImage: UIJournalIcons.apartment_purchase_westbrook
+  price: EconomicAssignment.vs_apartment_dlc6_apart_wbr_jpn

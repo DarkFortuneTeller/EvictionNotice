@@ -1,0 +1,5 @@
+Apartment.glen_offer:
+  $type: gamedataPurchaseOffer_Record
+  name: LocKey#80747
+  previewImage: UIJournalIcons.apartment_purchase_heywood
+  price: EconomicAssignment.vs_apartment_dlc6_apart_hey_gle
