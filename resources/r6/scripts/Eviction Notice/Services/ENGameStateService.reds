@@ -229,8 +229,6 @@ public final class ENGameStateService extends ENSystem {
             this.gameplayTier = IntEnum<GameplayTier>(value);
             GameInstance.GetCallbackSystem().DispatchEvent(ENGameStateServiceSceneTierChangedEvent.Create(this.gameplayTier));
         }
-
-        this.TryToShowTutorial();
     }
 
     private final func OnStartupSequenceDoneFactChanged(value: Int32) -> Void {
@@ -258,6 +256,7 @@ public final class ENGameStateService extends ENSystem {
         
     }
 
+    // TODO: You may no longer need to guard against scene tier any longer
     public final func GetGameState(callerName: String, opt ignoreTemporarilyInvalid: Bool, opt ignoreSleepCinematic: Bool) -> GameState {
         if !this.Settings.mainSystemEnabled {
             ENLog(this.debugEnabled, this, "GetGameState() returned Invalid for caller " + callerName + ": this.Settings.mainSystemEnabled=" + ToString(this.Settings.mainSystemEnabled));
@@ -299,7 +298,6 @@ public final class ENGameStateService extends ENSystem {
             return GameState.TemporarilyInvalid;
         }
 
-        // TODO: Move to more relevant location
         return GameState.Valid;
     }
 
@@ -314,61 +312,4 @@ public final class ENGameStateService extends ENSystem {
 	private func GetActivationMessageKey() -> CName {
 		return n"EvictionNoticeTutorialActivate";
 	}
-
-    // TODO
-    private final func TryToShowTutorial() -> Void {
-        let blackboardDef: ref<IBlackboard> = this.BlackboardSystem.Get(GetAllBlackboardDefs().UIGameData);
-        let myMargin: inkMargin = new inkMargin(0.0, 0.0, 0.0, 150.0);
-        let popupSettingsDatum: PopupSettings;
-        popupSettingsDatum.closeAtInput = false;
-        popupSettingsDatum.pauseGame = false;
-        popupSettingsDatum.fullscreen = false;
-        popupSettingsDatum.position = PopupPosition.LowerLeft;
-        popupSettingsDatum.hideInMenu = true;
-        popupSettingsDatum.margin = myMargin;
-
-        let tutorialTitle: String = "Hi";
-        let tutorialMessage: String = "Test";
-        let popupDatum: PopupData;
-        popupDatum.title = tutorialTitle;
-        popupDatum.message = tutorialMessage;
-        popupDatum.isModal = false;
-        popupDatum.videoType = VideoType.Unknown;
-
-        blackboardDef.SetVariant(GetAllBlackboardDefs().UIGameData.Popup_Settings, ToVariant(popupSettingsDatum));
-        blackboardDef.SetVariant(GetAllBlackboardDefs().UIGameData.Popup_Data, ToVariant(popupDatum));
-        blackboardDef.SignalVariant(GetAllBlackboardDefs().UIGameData.Popup_Data);
-
-    /*    if !this.hasShownActivationMessage {
-			this.hasShownActivationMessage = true;
-			let tutorial: ENTutorial;
-			tutorial.title = GetLocalizedTextByKey(this.GetActivationTitleKey());
-			tutorial.message = GetLocalizedTextByKey(this.GetActivationMessageKey());
-            tutorial.iconID = t"UIIcon.EvictionNoticeTutorial";
-			this.NotificationService.QueueTutorial(tutorial);
-		}
-    */
-	}
 }
-
-// TODO: Test
-@replaceMethod(PopupsManager)
-    private final func ShowTutorial() -> Void {
-        let notificationData: ref<TutorialPopupData> = new TutorialPopupData();
-        notificationData.notificationName = n"base\\gameplay\\gui\\widgets\\notifications\\tutorial.inkwidget";
-        notificationData.queueName = n"tutorial";
-        notificationData.closeAtInput = this.m_tutorialSettings.closeAtInput;
-        notificationData.pauseGame = this.m_tutorialSettings.pauseGame;
-        notificationData.position = this.m_tutorialSettings.position;
-        notificationData.isModal = this.m_tutorialSettings.fullscreen;
-        notificationData.margin = this.m_tutorialSettings.margin;
-        notificationData.title = this.m_tutorialData.title;
-        notificationData.message = this.m_tutorialData.message;
-        notificationData.messageOverrideDataList = this.m_tutorialData.messageOverrideDataList;
-        notificationData.imageId = this.m_tutorialData.iconID;
-        notificationData.videoType = this.m_tutorialData.videoType;
-        notificationData.video = PopupData.GetVideo(this.m_tutorialData);
-        notificationData.isBlocking = this.m_tutorialSettings.closeAtInput;
-        this.m_tutorialToken = this.ShowGameNotification(notificationData);
-        this.m_tutorialToken.RegisterListener(this, n"OnPopupCloseRequest");
-    }

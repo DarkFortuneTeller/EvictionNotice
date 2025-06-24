@@ -175,7 +175,7 @@ public class ENSettings extends ScriptableSystem {
 	@runtimeProperty("ModSettings.description", "EvictionNoticeSettingEZEstatesFeeDesc")
 	@runtimeProperty("ModSettings.step", "100")
 	@runtimeProperty("ModSettings.min", "100")
-	@runtimeProperty("ModSettings.max", "200000")
+	@runtimeProperty("ModSettings.max", "20000")
 	public let costEZBobFee: Int32 = 5000;
 
 	@runtimeProperty("ModSettings.mod", "Eviction Notice")
@@ -192,7 +192,7 @@ public class ENSettings extends ScriptableSystem {
 	@runtimeProperty("ModSettings.description", "EvictionNoticeSettingEZEstatesAutoPayFeeDesc")
 	@runtimeProperty("ModSettings.step", "100")
 	@runtimeProperty("ModSettings.min", "100")
-	@runtimeProperty("ModSettings.max", "200000")
+	@runtimeProperty("ModSettings.max", "20000")
 	public let costAutoPayFee: Int32 = 1000;
 
 	@runtimeProperty("ModSettings.mod", "Eviction Notice")

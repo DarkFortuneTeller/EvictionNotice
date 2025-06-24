@@ -83,9 +83,6 @@ public enum ENWelcomeMessageType {
     WelcomeBack = 2
 }
 
-// TODO: Bug on Warn 1 (displaying Warn 2 instead) after 1 Day Overdue
-// TODO: Bug - Displays 4 days overdue when previous save loaded was saved at 3 days overdue
-
 public abstract class ENRentSystemBaseEventListeners extends ENSystemEventListener {
     //
 	// Required Overrides
@@ -436,8 +433,6 @@ public abstract class ENRentSystemBase extends ENSystem {
         this.propertyDebugName = debugName;
     }
 
-    // TODO - Fix move out not working when Auto Pay enabled
-    // TODO - Fix EZEstates auto pay dialogue being incorrect when automatically disabled
     private final func UpdateRent(currentDay: Int32) {
         ENLog(this.debugEnabled, this, "############### UpdateRent: The Current Day Is Now: " + ToString(currentDay) + " ###############");
 

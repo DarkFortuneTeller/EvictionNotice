@@ -189,7 +189,6 @@ public final class ENPropertyStateService extends ENSystem {
     public func OnTimeSkipFinished(data: ENTimeSkipData) -> Void {}
     public func OnSettingChangedSpecific(changedSettings: array<String>) -> Void {}
 
-    // TODO: Why is the Overdue Days incrementing from 3 to 4 after saving and loading on new test save?
     private func InitSpecific(attachedPlayer: ref<PlayerPuppet>) -> Void {
         // Initialize the current and next rent cycle start game times if not initialized
         if !this.CurrentRentCycleStart.initialized || !this.NextRentCycleStart.initialized {
@@ -555,24 +554,36 @@ public final class ENPropertyStateService extends ENSystem {
     }
 
     //
-    //  Choice Hubs
+    //  Registration
     //
-    public final func OnChoiceHub(value: Variant) {
-		if RunGuard(this) { return; }
+    private final func RegisterCheckCurrentDayDelayCallback() -> Void {
+		RegisterENDelayCallback(this.DelaySystem, CheckCurrentDayDelayCallback.Create(), this.checkCurrentDayDelayID, this.updateIntervalInRealTimeSeconds);
+	}
 
-		let hubs: DialogChoiceHubs = FromVariant<DialogChoiceHubs>(value);
-		for hub in hubs.choiceHubs {
-			for choice in hub.choices {
-                FTLog(choice.localizedName);
-            }
-		}
+    private final func UnregisterCheckCurrentDayDelayCallback() -> Void {
+		UnregisterENDelayCallback(this.DelaySystem, this.checkCurrentDayDelayID);
 	}
 
     //
-    //  Wildcard Replacement
+    //  Text Replacement
     //
-    // TODO: Relocate this
-    private func ReplaceEvictionNoticeWildcards(plainTxt: String) -> String {
+    private final func ReplaceAliasTokenWithNumber(out txt: String, token: String, number: Int32, opt euroDollar: String, opt isCurrency: Bool) {
+        if StrContains(txt, token) {
+            if isCurrency {
+                StrReplaceAll(txt, token, euroDollar + ToString(number));
+            } else {
+                StrReplaceAll(txt, token, ToString(number));
+            }
+        }
+    }
+
+    private final func ReplaceAliasToken(out txt: String, token: String, replacement: String) {
+        if StrContains(txt, token) {
+            StrReplaceAll(txt, token, replacement);
+        }
+    }
+
+    public final func ReplaceEvictionNoticeWildcards(plainTxt: String) -> String {
         if StrContains(plainTxt, "{EN_ALIAS_COST_") {
             let euroDollar = GetLocalizedTextByKey(n"Common-Characters-EuroDollar");
             
@@ -633,33 +644,6 @@ public final class ENPropertyStateService extends ENSystem {
 
         return plainTxt;
     }
-
-    private func ReplaceAliasTokenWithNumber(out txt: String, token: String, number: Int32, opt euroDollar: String, opt isCurrency: Bool) {
-        if StrContains(txt, token) {
-            if isCurrency {
-                StrReplaceAll(txt, token, euroDollar + ToString(number));
-            } else {
-                StrReplaceAll(txt, token, ToString(number));
-            }
-        }
-    }
-
-    private func ReplaceAliasToken(out txt: String, token: String, replacement: String) {
-        if StrContains(txt, token) {
-            StrReplaceAll(txt, token, replacement);
-        }
-    }
-
-    //
-    //  Registration
-    //
-    private final func RegisterCheckCurrentDayDelayCallback() -> Void {
-		RegisterENDelayCallback(this.DelaySystem, CheckCurrentDayDelayCallback.Create(), this.checkCurrentDayDelayID, this.updateIntervalInRealTimeSeconds);
-	}
-
-    private final func UnregisterCheckCurrentDayDelayCallback() -> Void {
-		UnregisterENDelayCallback(this.DelaySystem, this.checkCurrentDayDelayID);
-	}
 }
 
 @wrapMethod(WorldMapTooltipController)

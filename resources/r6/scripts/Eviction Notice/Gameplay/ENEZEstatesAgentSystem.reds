@@ -120,14 +120,6 @@ public class ENEZEstatesAgentSystem extends ENSystem {
         return n"en_fact_has_ever_moved_back_in";
     }
 
-    public func GetHasEverMovedBackInAfterMoveOutQuestFact() -> CName {
-        return n"en_fact_has_ever_moved_back_in_after_move_out";
-    }
-
-    public func GetHasEverMovedBackInAfterEvictionQuestFact() -> CName {
-        return n"en_fact_has_ever_moved_back_in_after_eviction";
-    }
-
     public func GetRentCycleTimeLeftQuestFact() -> CName {
         return n"en_fact_rent_cycle_time_left";
     }
@@ -167,13 +159,6 @@ public class ENEZEstatesAgentSystem extends ENSystem {
             if GetPlayerMoney() >= moveInCost {
                 // Set a fact to note if we have ever moved back in after moving out or eviction. Changes Bob's dialogue.
                 this.QuestsSystem.SetFact(this.GetHasEverMovedBackInQuestFact(), 1);
-
-                let reason: ENSurrenderReason = this.PropertyStateService.GetSurrenderReasonFromMoveInPendingID();
-                if Equals(reason, ENSurrenderReason.MovedOut) {
-                    this.QuestsSystem.SetFact(this.GetHasEverMovedBackInAfterMoveOutQuestFact(), 1);
-                } else if Equals(reason, ENSurrenderReason.Evicted) {
-                    this.QuestsSystem.SetFact(this.GetHasEverMovedBackInAfterEvictionQuestFact(), 1);
-                }
 
                 this.PropertyStateService.GetRentalSystemFromRentalProperty(pendingApartment).MoveIn(moveInCost);
                 this.SetLastMoveInWasSuccessful(true);

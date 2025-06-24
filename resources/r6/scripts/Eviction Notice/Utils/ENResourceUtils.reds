@@ -155,7 +155,6 @@ public class ENResourceHandler extends ScriptableService {
         return this.repeatableMessages;
     }
 
-    // TODO: Test against website framework mod
     private final func SetEZEstatesWebsiteOnApartmentComputer(pageDatum: ENInternetPageDatum) -> Void {
         let image: ref<JournalInternetImage> = new JournalInternetImage();
         image.linkAddress = "NETdir://ezestates.web/for_rent";
