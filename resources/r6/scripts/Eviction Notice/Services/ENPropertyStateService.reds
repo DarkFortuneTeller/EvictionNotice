@@ -372,7 +372,6 @@ public final class ENPropertyStateService extends ENSystem {
     private final func InitializeStartupTimeData(newGameRentState: ENSettingRentStateOnNewGame) -> Void {
         ENLog(this.debugEnabled, this, "************ InitializeStartupTimeData ************");
 
-        // TODO: Might not need initialized state any more, could just be a number
         if Equals(newGameRentState, ENSettingRentStateOnNewGame.Paid) || Equals(newGameRentState, ENSettingRentStateOnNewGame.Due) || Equals(newGameRentState, ENSettingRentStateOnNewGame.Evicted) {
             this.CurrentRentCycleStart.day = this.CurrentDay;
             this.CurrentRentCycleStart.initialized = true;

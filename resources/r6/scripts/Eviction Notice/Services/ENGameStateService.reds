@@ -256,7 +256,6 @@ public final class ENGameStateService extends ENSystem {
         
     }
 
-    // TODO: You may no longer need to guard against scene tier any longer
     public final func GetGameState(callerName: String, opt ignoreTemporarilyInvalid: Bool, opt ignoreSleepCinematic: Bool) -> GameState {
         if !this.Settings.mainSystemEnabled {
             ENLog(this.debugEnabled, this, "GetGameState() returned Invalid for caller " + callerName + ": this.Settings.mainSystemEnabled=" + ToString(this.Settings.mainSystemEnabled));

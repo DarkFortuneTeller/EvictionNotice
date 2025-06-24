@@ -8,7 +8,8 @@
 // TODO - I think there is a base assumption that the eviction period is double the rental period,
 // instead of the value specified in the settings. Do all messages work correctly when this value
 // is not double the rent period?
-// TODO - Check text in q303
+// TODO - Eviction lockout period
+// TODO - Update the q303 emails to reflect the player's current rental state
 
 module EvictionNotice.Gameplay
 
@@ -370,7 +371,6 @@ public abstract class ENRentSystemBase extends ENSystem {
         this.UpdateRent(currentDay);
     }
 
-    // TODO - This function is called very often when in SMS messages - see logs
     public func GetOutstandingBalance() -> Int32 {
         let rentState: ENRentState = this.GetRentState();
 
@@ -405,12 +405,15 @@ public abstract class ENRentSystemBase extends ENSystem {
         return this.lastOutstandingBalance;
     }
 
-    public final func MoveIn(moveInCost: Int32) -> Void {
-        RemovePlayerMoney(moveInCost);
-        // TODO: Make this a function call
+    private final func SetRequiredPaidAndOccupancyStates() -> Void {
         this.lastPaidRentCycleStartDay = this.PropertyStateService.GetCurrentRentCycleStartDay();
         this.SetRentState(ENRentState.Paid);
         this.SetMoveOutState(ENMoveOutState.NotMovingOut);
+    }
+
+    public final func MoveIn(moveInCost: Int32) -> Void {
+        RemovePlayerMoney(moveInCost);
+        this.SetRequiredPaidAndOccupancyStates();
         this.UnlockApartmentDoor();
     }
 
@@ -418,11 +421,6 @@ public abstract class ENRentSystemBase extends ENSystem {
         let nr: NodeRef = CreateNodeRef(nodeRefPath);
         let eid: EntityID = EntityID.FromHash(NodeRefToHash(nr));
         return CreatePersistentID(eid, componentName);
-    }
-
-    // TODO: likely no longer needed
-    private final func GetDaysUntilEvictionAtFinalWarning() -> Int32 {
-        return this.Settings.rentalPeriodInDays - FloorF((Cast<Float>(this.Settings.rentalPeriodInDays) - 1.0) * 0.85);
     }
 
     private func GetPropertyDebugName() -> String {
@@ -474,7 +472,6 @@ public abstract class ENRentSystemBase extends ENSystem {
                 // Paid status is set when payment is made.
                 ENLog(this.debugEnabled, this, "    Rent on " + this.GetPropertyDebugName() + " is paid.");
                 
-                // TODO - Look at QueueMoveOut, reconcile these conditions
                 if Equals(this.moveOutState, ENMoveOutState.MovingOut) && currentDay == (rentExpirationDay - 1) {
                     ENLog(this.debugEnabled, this, "    Sent one day remaining move out warning.");
                     this.moveOutState = ENMoveOutState.SentWarning;
@@ -556,23 +553,18 @@ public abstract class ENRentSystemBase extends ENSystem {
 
     private final func OnBaseGamePurchasedFactChanged(value: Int32) -> Void {
         if value > 0 {
-            // TODO: Make this a function call
-            this.lastPaidRentCycleStartDay = this.PropertyStateService.GetCurrentRentCycleStartDay();
-            this.SetRentState(ENRentState.Paid);
-            this.SetMoveOutState(ENMoveOutState.NotMovingOut);
+            this.SetRequiredPaidAndOccupancyStates();
             this.SendWelcomeMessage(ENWelcomeMessageType.Welcome);
         }
     }
 
-    // TODO: Start the player off with a very hefty debt after several due date extensions
     public final func TryToPayRent() -> Bool {
         let paid: Bool = TryToRemovePlayerMoney(this.GetOutstandingBalance());
-
         if paid {
             this.lastPaidRentCycleStartDay = this.PropertyStateService.GetCurrentRentCycleStartDay();
             this.SetRentState(ENRentState.Paid);
-
             return true;
+
         } else {
             return false;
         }
