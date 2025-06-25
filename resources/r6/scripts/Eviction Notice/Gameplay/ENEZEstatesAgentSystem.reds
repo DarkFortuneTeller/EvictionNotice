@@ -154,16 +154,18 @@ public class ENEZEstatesAgentSystem extends ENSystem {
             let apartmentID: Int32 = this.PropertyStateService.GetPendingMoveInApartmentID();
             let moveInCost: Int32 = this.GetOutstandingBalanceForProperty(apartmentID);
             let pendingApartment: ENRentalProperty = this.PropertyStateService.GetRentalPropertyByID(apartmentID);
+            let pendingApartmentRentalSystem: ref<ENRentSystemBase> = this.PropertyStateService.GetRentalSystemFromRentalProperty(pendingApartment);
 
             // If the player has enough money, execute the move-in.
-            if GetPlayerMoney() >= moveInCost {
-                // Set a fact to note if we have ever moved back in after moving out or eviction. Changes Bob's dialogue.
+            if GetPlayerMoney() < moveInCost {
+                this.SetLastMoveInWasSuccessful(false);
+
+            } else {
+                // Set a fact to note if we have ever moved back in after moving out or eviction. Changes dialogue.
                 this.QuestsSystem.SetFact(this.GetHasEverMovedBackInQuestFact(), 1);
 
-                this.PropertyStateService.GetRentalSystemFromRentalProperty(pendingApartment).MoveIn(moveInCost);
+                pendingApartmentRentalSystem.MoveIn(moveInCost);
                 this.SetLastMoveInWasSuccessful(true);
-            } else {
-                this.SetLastMoveInWasSuccessful(false);
             }
 
             // Allow Quest Phase graph to continue

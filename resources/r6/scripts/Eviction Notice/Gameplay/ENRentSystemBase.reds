@@ -110,6 +110,7 @@ public abstract class ENRentSystemBase extends ENSystem {
     private persistent let lastPaidRentCycleStartDay: Int32;
     private persistent let lastDaysOverdue: Int32;
     private persistent let lastOutstandingBalance: Int32;
+    private persistent let lastDayEvicted: Int32;
 
     private let ApartmentDoor: ref<DoorControllerPS>;
     private let ApartmentScreen: ref<ApartmentScreenControllerPS>;
@@ -171,6 +172,9 @@ public abstract class ENRentSystemBase extends ENSystem {
         let apartmentScreenPID: PersistentID = this.CreatePersistentIDFromNodeRefPath(this.GetApartmentScreenNodeRefPath(), n"controller");
         this.ApartmentScreen = this.PersistencySystem.GetConstAccessToPSObject(apartmentScreenPID, n"ApartmentScreenControllerPS") as ApartmentScreenControllerPS;
         this.ApartmentScreen.SetEvictionNoticeManaged();
+
+        // Set the last day evicted in the distant past to avoid lockout at game start
+        this.lastDayEvicted = -9999;
     }
 
     private func RegisterListeners() -> Void {
@@ -365,6 +369,10 @@ public abstract class ENRentSystemBase extends ENSystem {
 
     private final func GetOverdueFinalWarningDay() -> Int32 {
         return (this.lastPaidRentCycleStartDay + this.Settings.rentalPeriodInDays + this.Settings.daysUntilEviction - 1);
+    }
+
+    private func GetEvictionLockoutPeriodInDays() -> Int32 {
+        return this.Settings.evictionLockoutDays;
     }
 
     public func OnDayUpdated(currentDay: Int32) {
@@ -634,6 +642,11 @@ public abstract class ENRentSystemBase extends ENSystem {
 
         this.UpdateScreenState(state);
         this.PropertyStateService.UpdateRentedPropertyCount();
+
+        if Equals(state, ENRentState.Evicted) {
+            this.lastDayEvicted = this.PropertyStateService.GetCurrentDay();
+            ENLog(this.debugEnabled, this, "Last Day Evicted is now: " + ToString(this.lastDayEvicted));
+        }
     }
 
     private final func UpdateScreenState(state: ENRentState) -> Void {

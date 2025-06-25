@@ -8,9 +8,8 @@
 
 // Credits: Psiberx, MisterChedda, Bill, Deceptious
 // Fixed the aspect ratio of the apartment preview images on World Map tooltips
-// Idea: Option to start the game evicted from MBH10 (kicked out as soon as you leave from the shower).
-// Idea: Rent increases after moving out or eviction
-// Idea: Permanent forfeiture of security deposit if evicted (harsh)
+
+// TODO: Implement rent and eviction duration change from settings
 
 module EvictionNotice.Main
 

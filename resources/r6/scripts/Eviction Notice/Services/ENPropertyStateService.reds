@@ -100,6 +100,8 @@ public final class ENPropertyStateService extends ENSystem {
     //private let updateIntervalInRealTimeSeconds: Float = 30.0;
     private let updateIntervalInRealTimeSeconds: Float = 5.0;
 
+    private let lastRentSystemCheckedForEvictionLockout: ref<ENRentSystemBase>;
+
     public final static func GetInstance(gameInstance: GameInstance) -> ref<ENPropertyStateService> {
 		let instance: ref<ENPropertyStateService> = GameInstance.GetScriptableSystemsContainer(gameInstance).Get(n"EvictionNotice.Services.ENPropertyStateService") as ENPropertyStateService;
 		return instance;
@@ -280,6 +282,10 @@ public final class ENPropertyStateService extends ENSystem {
         return n"en_fact_rent_cycle_time_left";
     }
 
+    public func GetEvictionLockoutRemainingDaysQuestFact() -> CName {
+        return n"en_fact_eviction_lockout_remaining_days";
+    }
+
     private final func OnQuestPhaseDebugFactChanged(value: Int32) -> Void {
         if value != 0 {
             ENLog(this.debugEnabled, this, "#### DEBUG Quest Phase Graph --- Value: " + ToString(value));
@@ -304,7 +310,8 @@ public final class ENPropertyStateService extends ENSystem {
             ENLog(this.debugEnabled, this, "OnUpdateSurrenderReasonFromMoveInPendingIDActionFactChanged");
 
             let pendingMoveInRentalProperty: ENRentalProperty = this.GetRentalPropertyByID(this.GetPendingMoveInApartmentID());
-            let rentState: ENRentState = this.GetRentalSystemFromRentalProperty(pendingMoveInRentalProperty).GetRentState();
+            let rentSystem: ref<ENRentSystemBase> = this.GetRentalSystemFromRentalProperty(pendingMoveInRentalProperty);
+            let rentState: ENRentState = rentSystem.GetRentState();
 
             ENLog(this.debugEnabled, this, "    rentState of property " + ToString(pendingMoveInRentalProperty) + " = " + ToString(rentState));
 
@@ -313,6 +320,12 @@ public final class ENPropertyStateService extends ENSystem {
                 ENLog(this.debugEnabled, this, "    setting " + NameToString(this.GetSurrenderReasonFromMoveInPendingIDQuestFact()) + " to " + ToString(EnumInt<ENSurrenderReason>(ENSurrenderReason.MovedOut)));
             } else if Equals(rentState, ENRentState.Evicted) {
                 this.QuestsSystem.SetFact(this.GetSurrenderReasonFromMoveInPendingIDQuestFact(), EnumInt<ENSurrenderReason>(ENSurrenderReason.Evicted));
+                
+                let lockoutRemainingDays: Int32 = this.GetEvictionLockoutRemainingDays(rentSystem);
+                ENLog(this.debugEnabled, this, "    setting " + NameToString(this.GetEvictionLockoutRemainingDaysQuestFact()) + " to " + lockoutRemainingDays);
+                this.QuestsSystem.SetFact(this.GetEvictionLockoutRemainingDaysQuestFact(), lockoutRemainingDays);
+                
+                this.SetLastRentSystemCheckedForEvictionLockout(rentSystem);
                 ENLog(this.debugEnabled, this, "    setting " + NameToString(this.GetSurrenderReasonFromMoveInPendingIDQuestFact()) + " to " + ToString(EnumInt<ENSurrenderReason>(ENSurrenderReason.Evicted)));
             }
             
@@ -552,6 +565,14 @@ public final class ENPropertyStateService extends ENSystem {
         GameInstance.GetCallbackSystem().DispatchEvent(ENPropertyStateServiceCurrentDayUpdateEvent.Create(this.CurrentDay));
     }
 
+    public final func GetEvictionLockoutRemainingDays(rentalSystem: ref<ENRentSystemBase>) -> Int32 {
+        return (rentalSystem.lastDayEvicted + this.Settings.evictionLockoutDays) - this.GetCurrentDay();
+    }
+
+    public final func SetLastRentSystemCheckedForEvictionLockout(rentalSystem: ref<ENRentSystemBase>) -> Void {
+        this.lastRentSystemCheckedForEvictionLockout = rentalSystem;
+    }
+
     //
     //  Registration
     //
@@ -635,6 +656,7 @@ public final class ENPropertyStateService extends ENSystem {
             //this.ReplaceAliasTokenWithNumber(plainTxt, "{EN_ALIAS_DAYS_CORPOPLAZA_OVERDUE_WARN3}", this.CorpoPlaza.GetOverdueFinalWarningDay() - this.CorpoPlaza.GetRentExpirationDay());
 
             this.ReplaceAliasTokenWithNumber(plainTxt, "{EN_ALIAS_DAYS_RENTDUE}", this.GetLastQueriedDaysLeftInRentCycle());
+            this.ReplaceAliasTokenWithNumber(plainTxt, "{EN_ALIAS_DAYS_EVICTION_LOCKOUT}", this.QuestsSystem.GetFact(this.GetEvictionLockoutRemainingDaysQuestFact()));
         }
 
         if StrContains(plainTxt, "{EN_ALIAS_GENERAL_") {

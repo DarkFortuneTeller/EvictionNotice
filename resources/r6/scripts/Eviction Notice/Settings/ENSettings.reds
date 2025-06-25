@@ -170,6 +170,16 @@ public class ENSettings extends ScriptableSystem {
 
 	@runtimeProperty("ModSettings.mod", "Eviction Notice")
 	@runtimeProperty("ModSettings.category", "EvictionNoticeSettingsCategoryGeneral")
+	@runtimeProperty("ModSettings.category.order", "20")
+	@runtimeProperty("ModSettings.displayName", "EvictionNoticeSettingGeneralEvictionLockoutDays")
+	@runtimeProperty("ModSettings.description", "EvictionNoticeSettingGeneralEvictionLockoutDaysDesc")
+	@runtimeProperty("ModSettings.step", "1")
+	@runtimeProperty("ModSettings.min", "0")
+	@runtimeProperty("ModSettings.max", "60")
+	public let evictionLockoutDays: Int32 = 14;
+
+	@runtimeProperty("ModSettings.mod", "Eviction Notice")
+	@runtimeProperty("ModSettings.category", "EvictionNoticeSettingsCategoryGeneral")
 	@runtimeProperty("ModSettings.category.order", "40")
 	@runtimeProperty("ModSettings.displayName", "EvictionNoticeSettingEZEstatesFee")
 	@runtimeProperty("ModSettings.description", "EvictionNoticeSettingEZEstatesFeeDesc")
