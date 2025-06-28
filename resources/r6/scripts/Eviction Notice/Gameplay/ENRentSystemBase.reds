@@ -8,7 +8,6 @@
 // TODO - I think there is a base assumption that the eviction period is double the rental period,
 // instead of the value specified in the settings. Do all messages work correctly when this value
 // is not double the rent period?
-// TODO - Eviction lockout period
 // TODO - Update the q303 emails to reflect the player's current rental state
 
 module EvictionNotice.Gameplay

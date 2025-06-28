@@ -33,7 +33,7 @@ public struct ENInternetPageDatum {
 }
 
 // JournalEntriesListController
-// Catch romance hangout SMS choices and prevent them from being selected if a property is not available. 
+// Adjust the visibility of SMS choices.
 //
 @wrapMethod(JournalEntriesListController)
 public final func PushEntries(const data: script_ref<array<wref<JournalEntry>>>) -> Void {
@@ -90,13 +90,19 @@ public final func PushEntries(const data: script_ref<array<wref<JournalEntry>>>)
         // Eviction Notice - EZEstates Player Root - Auto Pay
         } else if Equals(id, "AutoPayEnable") {
             // Check if Auto Pay is already enabled
-            if ENBillPaySystem.Get().IsAutoPayEnabled() {
+            if !ENSettings.Get().autoPayAllowed || ENBillPaySystem.Get().IsAutoPayEnabled() {
                 ArrayRemove(entries, entry);
             }
 
         } else if Equals(id, "AutoPayDisable") {
             // Check if Auto Pay is already disabled
-            if !ENBillPaySystem.Get().IsAutoPayEnabled() {
+            if !ENSettings.Get().autoPayAllowed || !ENBillPaySystem.Get().IsAutoPayEnabled() {
+                ArrayRemove(entries, entry);
+            }
+
+        } else if Equals(id, "AutoPayInitial") {
+            // Check if Auto Pay is allowed in Settings
+            if !ENSettings.Get().autoPayAllowed {
                 ArrayRemove(entries, entry);
             }
         }

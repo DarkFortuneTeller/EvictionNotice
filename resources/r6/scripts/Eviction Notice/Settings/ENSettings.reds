@@ -67,6 +67,7 @@ public class ENSettings extends ScriptableSystem {
 	// Internal change tracking use only. DO NOT USE.
 	// Internal change tracking use only. DO NOT USE.
 	private let _mainSystemEnabled: Bool = true;
+	private let _autoPayAllowed: Bool = true;
 	// Internal change tracking use only. DO NOT USE.
 	// Internal change tracking use only. DO NOT USE.
 
@@ -100,6 +101,11 @@ public class ENSettings extends ScriptableSystem {
 		if NotEquals(this._mainSystemEnabled, this.mainSystemEnabled) {
 			this._mainSystemEnabled = this.mainSystemEnabled;
 			ArrayPush(changedSettings, "mainSystemEnabled");
+		}
+
+		if NotEquals(this._autoPayAllowed, this.autoPayAllowed) {
+			this._autoPayAllowed = this.autoPayAllowed;
+			ArrayPush(changedSettings, "autoPayAllowed");
 		}
 		
 		if ArraySize(changedSettings) > 0 {
@@ -188,16 +194,19 @@ public class ENSettings extends ScriptableSystem {
 	@runtimeProperty("ModSettings.max", "20000")
 	public let costEZBobFee: Int32 = 5000;
 
+	// -------------------------------------------------------------------------
+	// Auto-Pay
+	// -------------------------------------------------------------------------
 	@runtimeProperty("ModSettings.mod", "Eviction Notice")
-	@runtimeProperty("ModSettings.category", "EvictionNoticeSettingsCategoryGeneral")
-	@runtimeProperty("ModSettings.category.order", "40")
+	@runtimeProperty("ModSettings.category", "EvictionNoticeSettingsCategoryAutoPay")
+	@runtimeProperty("ModSettings.category.order", "45")
 	@runtimeProperty("ModSettings.displayName", "EvictionNoticeSettingEZEstatesAutoPayAllowed")
 	@runtimeProperty("ModSettings.description", "EvictionNoticeSettingEZEstatesAutoPayAllowedDesc")
 	public let autoPayAllowed: Bool = true;
 
 	@runtimeProperty("ModSettings.mod", "Eviction Notice")
-	@runtimeProperty("ModSettings.category", "EvictionNoticeSettingsCategoryGeneral")
-	@runtimeProperty("ModSettings.category.order", "40")
+	@runtimeProperty("ModSettings.category", "EvictionNoticeSettingsCategoryAutoPay")
+	@runtimeProperty("ModSettings.category.order", "45")
 	@runtimeProperty("ModSettings.displayName", "EvictionNoticeSettingEZEstatesAutoPayFee")
 	@runtimeProperty("ModSettings.description", "EvictionNoticeSettingEZEstatesAutoPayFeeDesc")
 	@runtimeProperty("ModSettings.step", "100")
@@ -206,8 +215,8 @@ public class ENSettings extends ScriptableSystem {
 	public let costAutoPayFee: Int32 = 1000;
 
 	@runtimeProperty("ModSettings.mod", "Eviction Notice")
-	@runtimeProperty("ModSettings.category", "EvictionNoticeSettingsCategoryGeneral")
-	@runtimeProperty("ModSettings.category.order", "40")
+	@runtimeProperty("ModSettings.category", "EvictionNoticeSettingsCategoryAutoPay")
+	@runtimeProperty("ModSettings.category.order", "45")
 	@runtimeProperty("ModSettings.displayName", "EvictionNoticeSettingEZEstatesAutoPayMinPropertyCount")
 	@runtimeProperty("ModSettings.description", "EvictionNoticeSettingEZEstatesAutoPayMinPropertyCountDesc")
 	@runtimeProperty("ModSettings.step", "1")

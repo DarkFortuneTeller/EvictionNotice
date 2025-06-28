@@ -24,7 +24,8 @@ public enum ENAutoPayEnableResult {
     None = 0,
     Success = 1,
     FailedOutstandingBalance = 2,
-    FailedNoProperty = 3
+    FailedNoProperty = 3,
+    FailedSettingDisabled = 4
 }
 
 public enum ENAutoPayDisableReason {
@@ -40,8 +41,9 @@ public enum ENAutoPayMessageType {
     Intro = 1,
     DisablePaymentFailed = 2,
     DisableNoProperty = 3,
-    PaymentProcessed = 4,
-    PaymentReminder = 5
+    DisableSettingDisabled = 4,
+    PaymentProcessed = 5,
+    PaymentReminder = 6
 }
 
 public class ENBillPaySystemBaseEventListeners extends ENSystemEventListener {
@@ -66,6 +68,7 @@ public class ENBillPaySystemBaseEventListeners extends ENSystemEventListener {
 public class ENBillPaySystem extends ENSystem {
     private persistent let lastPaidAmount: Int32;
     private persistent let autoPayInviteSent: Bool = false;
+    private persistent let autoPayWasEverAvailable: Bool = false;
 
     private let QuestsSystem: ref<QuestsSystem>;
     private let JournalManager: ref<JournalManager>;
@@ -80,6 +83,7 @@ public class ENBillPaySystem extends ENSystem {
     private let factListenerActionTryToEnableAutoPay: Uint32;
     private let factListenerActionDisableAutoPay: Uint32;
     private let factListenerActionUpdateLastAutoPayState: Uint32;
+    private let factListenerAutoPayAvailable: Uint32;
 
     private let rentalSystems: array<ref<ENRentSystemBase>>;
     private let repeatableMessages: array<ref<JournalPhoneMessage>>;
@@ -111,8 +115,13 @@ public class ENBillPaySystem extends ENSystem {
     }
 
     private func DoPostResumeActions() -> Void {
-        // TODO
-        this.TryToSendAutoPayInvite();
+        if !this.autoPayInviteSent {
+            this.TryToSendAutoPayInvite();
+        } else {
+            if this.autoPayWasEverAvailable {
+                this.SetAutoPayAvailable(true);
+            }
+        }
     }
 
     private func GetSystems() -> Void {
@@ -148,6 +157,7 @@ public class ENBillPaySystem extends ENSystem {
         this.factListenerActionTryToEnableAutoPay = this.QuestsSystem.RegisterListener(this.GetActionTryToEnableAutoPayQuestFact(), this, n"OnTryToEnableAutoPay");
         this.factListenerActionDisableAutoPay = this.QuestsSystem.RegisterListener(this.GetActionDisableAutoPayQuestFact(), this, n"OnDisableAutoPay");
         this.factListenerActionUpdateLastAutoPayState = this.QuestsSystem.RegisterListener(this.GetActionUpdateLastAutoPayStateQuestFact(), this, n"OnUpdateLastAutoPayState");
+        this.factListenerAutoPayAvailable = this.QuestsSystem.RegisterListener(this.GetAutoPayAvailableQuestFact(), this, n"OnUpdateAutoPayAvailable");
     }
     
     private func RegisterAllRequiredDelayCallbacks() -> Void {}
@@ -164,6 +174,9 @@ public class ENBillPaySystem extends ENSystem {
 
         this.QuestsSystem.UnregisterListener(this.GetActionUpdateLastAutoPayStateQuestFact(), this.factListenerActionUpdateLastAutoPayState);
         this.factListenerActionUpdateLastAutoPayState = 0u;
+
+        this.QuestsSystem.UnregisterListener(this.GetAutoPayAvailableQuestFact(), this.factListenerAutoPayAvailable);
+        this.factListenerAutoPayAvailable = 0u;
     }
     
     private func UnregisterAllDelayCallbacks() -> Void {}
@@ -313,7 +326,6 @@ public class ENBillPaySystem extends ENSystem {
         }
     }
 
-    // TODO: Handle settings changes
     private final func SetAutoPayAvailable(available: Bool) -> Void {
         ENLog(this.debugEnabled, this, "SetAutoPayAvailable: " + ToString(available));
         if available {
@@ -324,13 +336,11 @@ public class ENBillPaySystem extends ENSystem {
     }
 
     private final func EnableAutoPay() -> Void {
-        // TODO
         ENLog(this.debugEnabled, this, "!! EnableAutoPay !!");
         this.QuestsSystem.SetFact(this.GetAutoPayEnabledQuestFact(), 1);
     }
 
     private final func DisableAutoPay(reason: ENAutoPayDisableReason) -> Void {
-        // TODO
         ENLog(this.debugEnabled, this, "!! DisableAutoPay !! reason: " + ToString(reason));
         this.QuestsSystem.SetFact(this.GetAutoPayEnabledQuestFact(), 0);
 
@@ -339,6 +349,9 @@ public class ENBillPaySystem extends ENSystem {
 
         } else if Equals(reason, ENAutoPayDisableReason.FromNoProperty) {
             this.SendAutoPayMessageOfType(ENAutoPayMessageType.DisableNoProperty);
+
+        } else if Equals(reason, ENAutoPayDisableReason.FromSetting) {
+            this.SendAutoPayMessageOfType(ENAutoPayMessageType.DisableSettingDisabled);
         }
     }
 
@@ -416,7 +429,11 @@ public class ENBillPaySystem extends ENSystem {
     //
     public final func OnTryToEnableAutoPay(value: Int32) -> Void {
         if Equals(value, 1) {
-            if this.PropertyStateService.GetRentedPropertyCount() == 0u {
+            if !this.Settings.autoPayAllowed {
+                ENLog(this.debugEnabled, this, "OnTryToEnableAutoPay: FAILED: Setting Disabled");
+                this.QuestsSystem.SetFact(this.GetAutoPayEnableResultQuestFact(), EnumInt<ENAutoPayEnableResult>(ENAutoPayEnableResult.FailedSettingDisabled));
+
+            } else if this.PropertyStateService.GetRentedPropertyCount() == 0u {
                 ENLog(this.debugEnabled, this, "OnTryToEnableAutoPay: FAILED: No Property");
                 this.QuestsSystem.SetFact(this.GetAutoPayEnableResultQuestFact(), EnumInt<ENAutoPayEnableResult>(ENAutoPayEnableResult.FailedNoProperty));
 
@@ -442,11 +459,15 @@ public class ENBillPaySystem extends ENSystem {
     }
 
     public final func OnUpdateLastAutoPayState(value: Int32) -> Void {
-        FTLog("OnUpdateLastAutoPayState value: " + ToString(value));
-
         if Equals(value, 1) {
             this.QuestsSystem.SetFact(this.GetLastAutoPayEnabledQuestFact(), this.QuestsSystem.GetFact(this.GetAutoPayEnabledQuestFact()));
             this.QuestsSystem.SetFact(this.GetActionUpdateLastAutoPayStateQuestFact(), 0);
+        }
+    }
+
+    public final func OnUpdateAutoPayAvailable(value: Int32) -> Void {
+        if Equals(value, 1) {
+            this.autoPayWasEverAvailable = true;
         }
     }
 }
