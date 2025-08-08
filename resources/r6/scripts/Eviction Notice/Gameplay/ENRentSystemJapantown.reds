@@ -106,8 +106,44 @@ public final class ENRentSystemJapantown extends ENRentSystemBase {
         return n"en_fact_japantown_action_close_and_lock_door";
     }
 
+    public func GetActionUpdateApartmentPurchaseAllowedQuestFact() -> CName {
+        return n"en_fact_action_update_japantown_purchase_allowed";
+    }
+
+    public func GetActionUpdateHasAvailableDiscountQuestFact() -> CName {
+        return n"en_fact_action_update_japantown_has_available_discount";
+    }
+
+    public func GetActionSendPurchaseOfferMessageQuestFact() -> CName {
+        return n"en_fact_action_send_purchase_offer_message_japantown";
+    }
+
+    public func GetActionSendPurchaseCompleteMessageQuestFact() -> CName {
+        return n"en_fact_action_send_purchase_complete_message_japantown";
+    }
+
+    public final func GetActionDoRentDurationChangedCleanup() -> CName {
+        return n"en_fact_action_do_rent_duration_changed_cleanup_japantown";
+    }
+
     public final func GetPlayerHasRentMoneyQuestFact() -> CName {
         return n"en_fact_japantown_player_has_rent_money";
+    }
+
+    public func GetApartmentPurchaseAllowedQuestFact() -> CName {
+        return n"en_fact_japantown_purchase_allowed";
+    }
+
+    public func GetApartmentPurchaseAvailableQuestFact() -> CName {
+        return n"en_fact_japantown_purchase_available";
+    }
+
+    public func GetPaidRentCountRequiredForLoyaltyQuestFact() -> CName {
+        return n"en_fact_japantown_rent_paid_count_req_loyalty_quest";
+    }
+
+    public func GetHasAvailableDiscountQuestFact() -> CName {
+        return n"en_fact_japantown_has_available_discount";
     }
 
     public func GetCostLateFeePerDay() -> Int32 {
@@ -122,6 +158,10 @@ public final class ENRentSystemJapantown extends ENRentSystemBase {
         return FromVariant<Int32>(TweakDBInterface.GetFlat(t"EconomicAssignment.vs_apartment_dlc6_apart_wbr_jpn.overrideValue"));
     }
 
+    public func GetPurchaseAmount() -> Int32 {
+        return 1000000;
+    }
+
     private final func GetApartmentDebugName() -> String {
         return "Japantown";
     }
@@ -134,7 +174,21 @@ public final class ENRentSystemJapantown extends ENRentSystemBase {
         return "$/mod/worldbuildergroup_en_japantown/#worldbuildergroup_en_japantown_en_motel_screen";
     }
 
-    /*private final func GetApartmentScreenNodeRefPath() -> String {
-        return "$/03_night_city/c_westbrook/japan_town/loc_dlc6_apart_wbr_jpn_prefab7DGW3BI/loc_dlc6_apart_wbr_jpn_gameplay_prefabOC46BLA/#loc_dlc6_apart_wbr_jpn_devices/single_door_2t_prefabCZ4YERA/{terminal_}1_prefabGFATCTA";
-    }*/
+    private func GetApartmentPurchaseAllowedSettingValue() -> Bool {
+        // TODO - FUTURE
+        return false;
+    }
+
+    private func GetLoyaltyQuestDiscountPctSettingValue() -> Int32 {
+        // TODO - FUTURE
+		return 0;
+    }
+
+    private func GetLoyaltyQuestPath() -> String {
+        return "quests/minor_quest/japantown_loyaltyquest";
+    }
+
+    private func GetShowApartmentScreenMessageOnPurchase() -> Bool {
+        return true;
+    }
 }

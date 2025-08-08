@@ -30,22 +30,42 @@ import EvictionNotice.Services.ENPropertyStateService
 public struct ENInternetPageDatum {
     private let page: ref<JournalInternetPage>;
     private let indexToReplace: Int32;
+    private let pushToSiteList: Bool;
 }
 
 // JournalEntriesListController
-// Adjust the visibility of SMS choices.
+// Adjust the visibility of SMS choices outside of the Quest Condition system.
 //
 @wrapMethod(JournalEntriesListController)
 public final func PushEntries(const data: script_ref<array<wref<JournalEntry>>>) -> Void {
     let entries: array<wref<JournalEntry>> = Deref(data);
     let rentSystem: ref<ENRentSystemBase>;
+    let questsSystem: ref<QuestsSystem> = GameInstance.GetQuestsSystem(GetGameInstance());
+    let Settings: ref<ENSettings> = ENSettings.Get();
     
     for entry in entries {
         let id = entry.GetId();
 
+        // Main System Toggle
+        if (Equals(id, "AutoPayInitial") || 
+            Equals(id, "AutoPayEnable") ||
+            Equals(id, "AutoPayDisable") ||
+            Equals(id, "MoveIn") || 
+            Equals(id, "MoveInRepeat") || 
+            Equals(id, "MoveOutSelect_MoveOut") ||
+            Equals(id, "MoveOutSelect_MoveOutRepeat") || 
+            Equals(id, "RentCycleTimeLeft") ||
+            Equals(id, "MoveOutSelect_H10") ||
+            Equals(id, "MoveOutSelect_Northside") ||
+            Equals(id, "MoveOutSelect_Japantown") ||
+            Equals(id, "MoveOutSelect_Glen") ||
+            Equals(id, "MoveOutSelect_CorpoPlaza")) &&
+            !Settings.mainSystemEnabled {
+                ArrayRemove(entries, entry);
+
         // Base Game - MQ055
         // Eviction Notice - EZEstates Move Out
-        if Equals(id, "01_06a_v_megabuilding") || Equals(id, "02_03a_v_megabuilding") || Equals(id, "MoveOutSelect_H10") {
+        } else if Equals(id, "01_06a_v_megabuilding") || Equals(id, "02_03a_v_megabuilding") || Equals(id, "MoveOutSelect_H10") {
             // Check Megabuilding H10 Rent State
             rentSystem = ENRentSystemMBH10.Get();
             if !rentSystem.IsCurrentRentStateRented() {
@@ -87,22 +107,61 @@ public final func PushEntries(const data: script_ref<array<wref<JournalEntry>>>)
                 ArrayRemove(entries, entry);
             }
 
-        // Eviction Notice - EZEstates Player Root - Auto Pay
+        // Eviction Notice - EZEstates Player Root
         } else if Equals(id, "AutoPayEnable") {
             // Check if Auto Pay is already enabled
-            if !ENSettings.Get().autoPayAllowed || ENBillPaySystem.Get().IsAutoPayEnabled() {
+            if !Settings.autoPayAllowed || ENBillPaySystem.Get().IsAutoPayEnabled() {
                 ArrayRemove(entries, entry);
             }
 
         } else if Equals(id, "AutoPayDisable") {
             // Check if Auto Pay is already disabled
-            if !ENSettings.Get().autoPayAllowed || !ENBillPaySystem.Get().IsAutoPayEnabled() {
+            if !Settings.autoPayAllowed || !ENBillPaySystem.Get().IsAutoPayEnabled() {
                 ArrayRemove(entries, entry);
             }
 
-        } else if Equals(id, "AutoPayInitial") {
-            // Check if Auto Pay is allowed in Settings
-            if !ENSettings.Get().autoPayAllowed {
+        // Eviction Notice - Corpo Plaza Requests
+        // Root Menu
+        } else if Equals(id, "en_flowers_new") {
+            if questsSystem.GetFact(n"en_fact_last_corpoplaza_flower_state") > 0 {
+                ArrayRemove(entries, entry);
+            }
+
+        } else if Equals(id, "en_flowers_change") {
+            if Equals(questsSystem.GetFact(n"en_fact_last_corpoplaza_flower_state"), 0) {
+                ArrayRemove(entries, entry);
+            }
+            
+        // Name Choice
+        } else if Equals(id, "en_NewNameChoice_Formal_Male") || Equals(id, "en_NewNameChoice_Full_Male") {
+            if Equals(ENPropertyStateService.Get().player.GetResolvedGenderName(), n"Female") {
+                ArrayRemove(entries, entry);
+            }
+
+        } else if Equals(id, "en_NewNameChoice_Formal_Female") || Equals(id, "en_NewNameChoice_Full_Female") {
+            if NotEquals(ENPropertyStateService.Get().player.GetResolvedGenderName(), n"Female") {
+                ArrayRemove(entries, entry);
+            }
+
+        // Flower Select
+        } else if Equals(id, "en_flowerselect_blue") {
+            if Equals(questsSystem.GetFact(n"en_fact_last_corpoplaza_flower_state"), 1) {
+                ArrayRemove(entries, entry);
+            }
+        } else if Equals(id, "en_flowerselect_pink") {
+            if Equals(questsSystem.GetFact(n"en_fact_last_corpoplaza_flower_state"), 2) {
+                ArrayRemove(entries, entry);
+            }
+        } else if Equals(id, "en_flowerselect_red") {
+            if Equals(questsSystem.GetFact(n"en_fact_last_corpoplaza_flower_state"), 3) {
+                ArrayRemove(entries, entry);
+            }
+        } else if Equals(id, "en_flowerselect_mix") {
+            if Equals(questsSystem.GetFact(n"en_fact_last_corpoplaza_flower_state"), 4) {
+                ArrayRemove(entries, entry);
+            }
+        } else if Equals(id, "en_flowerselect_remove") {
+            if Equals(questsSystem.GetFact(n"en_fact_last_corpoplaza_flower_state"), 0) {
                 ArrayRemove(entries, entry);
             }
         }
@@ -172,14 +231,23 @@ public class ENResourceHandler extends ScriptableService {
         image.textureAtlas = imageTextureAtlas;
         image.texturePart = n"EZestate";
 
-        pageDatum.page.images[pageDatum.indexToReplace] = image;
+        if pageDatum.pushToSiteList && ArraySize(pageDatum.page.images) < (pageDatum.indexToReplace + 1) {
+            ArrayPush(pageDatum.page.images, image);
+        } else {
+            pageDatum.page.images[pageDatum.indexToReplace] = image;
+        }
+        
 
         let internetText: ref<JournalInternetText> = new JournalInternetText();
         internetText.linkAddress = "NETdir://ezestates.web/for_rent";
         internetText.name = StringToName("TextLink" + siteIndexAsString);
         internetText.text = CreateLocalizationString("LocKey#80750");
 
-        pageDatum.page.texts[pageDatum.indexToReplace] = internetText;
+        if pageDatum.pushToSiteList && ArraySize(pageDatum.page.texts) < (pageDatum.indexToReplace + 1) {
+            ArrayPush(pageDatum.page.texts, internetText);
+        } else {
+            pageDatum.page.texts[pageDatum.indexToReplace] = internetText;
+        }
     }
 
     private cb func ProcessJournal(event: ref<ResourceEvent>) {
@@ -226,30 +294,21 @@ public class ENResourceHandler extends ScriptableService {
 
                     if IsDefined(homePage) {
                         // Megabuilding H10 - Handled by Base Game
-                        let northsideHomePage = this.FindInternetPage(homePage, "00_home_01_watson");
-                        let glenJapantownHomePage = this.FindInternetPage(homePage, "00_home");
-                        let corpoPlazaHomePage = this.FindInternetPage(homePage, "00_home_02_center");
+                        let commonHomePage = this.FindInternetPage(homePage, "00_home");
+                        let watsonHomePage = this.FindInternetPage(homePage, "00_home_01_watson");
+                        let cityCenterHomePage = this.FindInternetPage(homePage, "00_home_02_center");
+                        let westbrookHomePage = this.FindInternetPage(homePage, "00_home_03_westbrook");
+                        let heywoodHomePage = this.FindInternetPage(homePage, "00_home_04_heywood");
+                        let pacificaHomePage = this.FindInternetPage(homePage, "00_home_05_pacifica");
+                        let santoDomingoHomePage = this.FindInternetPage(homePage, "00_home_06_santodomingo");
 
-                        if IsDefined(northsideHomePage) {
-                            let pageDatum: ENInternetPageDatum;
-                            pageDatum.page = northsideHomePage;
-                            pageDatum.indexToReplace = 9; // Replace "Arasaka" Site
-                            ArrayPush(this.apartmentPageData, pageDatum);
-                        }
-
-                        if IsDefined(glenJapantownHomePage) {
-                            let pageDatum: ENInternetPageDatum;
-                            pageDatum.page = glenJapantownHomePage;
-                            pageDatum.indexToReplace = 9; // Takes up empty 10th spot
-                            ArrayPush(this.apartmentPageData, pageDatum);
-                        }
-
-                        if IsDefined(corpoPlazaHomePage) {
-                            let pageDatum: ENInternetPageDatum;
-                            pageDatum.page = corpoPlazaHomePage;
-                            pageDatum.indexToReplace = 3; // Replace "Execution Time" Site
-                            ArrayPush(this.apartmentPageData, pageDatum);
-                        }
+                        this.SetApartmentPageData(commonHomePage, 9, true);       // Empty 10th slot
+                        this.SetApartmentPageData(watsonHomePage, 6);       // Replace N54 News
+                        this.SetApartmentPageData(cityCenterHomePage, 1);   // Replace WNS News
+                        this.SetApartmentPageData(westbrookHomePage, 8);    // Replace "Full Body Conversion"
+                        this.SetApartmentPageData(heywoodHomePage, 1);      // Replace WNS News
+                        this.SetApartmentPageData(pacificaHomePage, 4);     // Replace "Execution Time"
+                        this.SetApartmentPageData(santoDomingoHomePage, 9); // Replace "NC Inquirer"
                     }
 
                     // Add text entries to each site for populating the Deposit and Rent Amount
@@ -266,6 +325,16 @@ public class ENResourceHandler extends ScriptableService {
         // Set up EZEstates website on all apartment computer terminals.
         for pageDatum in this.apartmentPageData {
             this.SetEZEstatesWebsiteOnApartmentComputer(pageDatum);
+        }
+    }
+
+    private final func SetApartmentPageData(page: ref<JournalInternetPage>, indexToReplace: Int32, opt pushToSiteList: Bool) -> Void {
+        if IsDefined(page) {
+            let pageDatum: ENInternetPageDatum;
+            pageDatum.page = page;
+            pageDatum.indexToReplace = indexToReplace;
+            pageDatum.pushToSiteList = pushToSiteList;
+            ArrayPush(this.apartmentPageData, pageDatum);
         }
     }
 
@@ -418,7 +487,7 @@ public class ENResourceHandler extends ScriptableService {
         let foundSite: ref<JournalInternetSite>;
         for internetSiteEntry in internetSiteEntries {
             if Equals(internetSiteEntry.id, id) {
-                FTLog("FindInternetSite: Found " + id);
+                //FTLog("FindInternetSite: Found " + id);
                 foundSite = internetSiteEntry as JournalInternetSite;
                 break;
             }
@@ -517,6 +586,8 @@ private final func ENGetRentalAmountForPage(pageId: String) -> Int32 {
 private final func FillPageFromJournal(page: wref<JournalInternetPage>) -> Void {
     wrappedMethod(page);
 
+    //FTLog("Filling page: " + ToString(page.id));
+
     let depositAmountTextWidget: ref<inkText> = this.GetRootCompoundWidget().GetWidget(n"Page/offer/city_center/ENDepositAmount") as inkText;
     let rentalAmountTextWidget: ref<inkText> = this.GetRootCompoundWidget().GetWidget(n"Page/offer/city_center/ENRentAmount") as inkText;
     
@@ -544,5 +615,16 @@ private final func FillPageFromJournal(page: wref<JournalInternetPage>) -> Void 
             }
         }
         i += 1;
+    }
+}
+
+@wrapMethod(WebPage)
+public final func FillPage(page: wref<JournalInternetPage>, journalManager: ref<JournalManager>) -> Void {
+    wrappedMethod(page, journalManager);
+
+    //FTLog("Filling page: " + ToString(page.id));
+
+    if Equals(page.GetAddress(), "NETdir://ezestates.web/for_rent") {
+        GameInstance.GetQuestsSystem(GetGameInstance()).SetFact(n"en_fact_action_apartment_homepage_visited", 1);
     }
 }

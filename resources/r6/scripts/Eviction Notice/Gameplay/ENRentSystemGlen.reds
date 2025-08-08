@@ -29,6 +29,19 @@ public final class ENRentSystemGlen extends ENRentSystemBase {
         this.QuestsSystem.SetFact(this.GetSystemRunningQuestFact(), 1);
     }
 
+    public func OnSettingChangedSpecific(changedSettings: array<String>) -> Void {
+        // TODO - Can this be consolidated under Base?
+        if ArrayContains(changedSettings, "glenPaymentsUntilQuest") {
+            this.QuestsSystem.SetFact(this.GetPaidRentCountRequiredForLoyaltyQuestFact(), this.Settings.glenPaymentsUntilQuest);
+        }
+
+        // TODO - Can this be consolidated under Base?
+        if ArrayContains(changedSettings, "glenPurchaseAllowed") {
+            let purchaseAllowed: Int32 = Equals(this.Settings.glenPurchaseAllowed, true) ? 1 : 0;
+            this.QuestsSystem.SetFact(this.GetApartmentPurchaseAllowedQuestFact(), purchaseAllowed);
+        }
+    }
+
     //
     //  Required Overrides
     //
@@ -100,8 +113,44 @@ public final class ENRentSystemGlen extends ENRentSystemBase {
         return n"en_fact_glen_action_close_and_lock_door";
     }
 
+    public func GetActionUpdateApartmentPurchaseAllowedQuestFact() -> CName {
+        return n"en_fact_action_update_glen_purchase_allowed";
+    }
+
+    public func GetActionUpdateHasAvailableDiscountQuestFact() -> CName {
+        return n"en_fact_action_update_glen_has_available_discount";
+    }
+
+    public func GetActionSendPurchaseOfferMessageQuestFact() -> CName {
+        return n"en_fact_action_send_purchase_offer_message_glen";
+    }
+
+    public func GetActionSendPurchaseCompleteMessageQuestFact() -> CName {
+        return n"en_fact_action_send_purchase_complete_message_glen";
+    }
+
+    public final func GetActionDoRentDurationChangedCleanup() -> CName {
+        return n"en_fact_action_do_rent_duration_changed_cleanup_glen";
+    }
+
     public final func GetPlayerHasRentMoneyQuestFact() -> CName {
         return n"en_fact_glen_player_has_rent_money";
+    }
+
+    public func GetApartmentPurchaseAllowedQuestFact() -> CName {
+        return n"en_fact_glen_purchase_allowed";
+    }
+
+    public func GetApartmentPurchaseAvailableQuestFact() -> CName {
+        return n"en_fact_glen_purchase_available";
+    }
+
+    public func GetPaidRentCountRequiredForLoyaltyQuestFact() -> CName {
+        return n"en_fact_glen_rent_paid_count_req_loyalty_quest";
+    }
+
+    public func GetHasAvailableDiscountQuestFact() -> CName {
+        return n"en_fact_glen_has_available_discount";
     }
 
     public func GetCostLateFeePerDay() -> Int32 {
@@ -109,11 +158,22 @@ public final class ENRentSystemGlen extends ENRentSystemBase {
     }
 
     public func GetRentAmount() -> Int32 {
-        return this.Settings.costGlenRent;
+        let loyaltyQuestComplete: Bool = this.IsLoyaltyQuestComplete();
+        let discountMult: Float = Cast<Float>(100 - this.Settings.glenLoyaltyDiscountPct) / 100.0;
+
+        if loyaltyQuestComplete {
+            return FloorF(Cast<Float>(this.Settings.costGlenRent) * discountMult);
+        } else {
+            return this.Settings.costGlenRent;
+        }
     }
     
     public func GetSecurityDepositAmount() -> Int32 {
         return FromVariant<Int32>(TweakDBInterface.GetFlat(t"EconomicAssignment.vs_apartment_dlc6_apart_hey_gle.overrideValue"));
+    }
+
+    public func GetPurchaseAmount() -> Int32 {
+        return this.Settings.costGlenPurchase;
     }
 
     private final func GetApartmentDebugName() -> String {
@@ -128,5 +188,19 @@ public final class ENRentSystemGlen extends ENRentSystemBase {
         return "$/mod/worldbuildergroup_en_glen/#worldbuildergroup_en_glen_en_apartment_screen_1";
     }
 
-    // Screen trigger: $/mod/worldbuildergroup_en_glen/#worldbuildergroup_en_glen_trigger_area_screen
+    private func GetApartmentPurchaseAllowedSettingValue() -> Bool {
+        return this.Settings.glenPurchaseAllowed;
+    }
+
+    private func GetLoyaltyQuestDiscountPctSettingValue() -> Int32 {
+        return this.Settings.glenLoyaltyDiscountPct;
+    }
+
+    private func GetLoyaltyQuestPath() -> String {
+        return "quests/minor_quest/glen_loyaltyquest";
+    }
+
+    private func GetShowApartmentScreenMessageOnPurchase() -> Bool {
+        return true;
+    }
 }

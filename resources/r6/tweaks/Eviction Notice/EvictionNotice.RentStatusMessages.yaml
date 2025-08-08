@@ -55,6 +55,32 @@ EvictionNoticeScreenMessages.Available:
     - 255
     - 1
 
+EvictionNoticeScreenMessages.Purchased:
+  $type: gamedataScreenMessageData_Record
+  autoScroll: True
+  backgroundOpacity: 1
+  backgroundTextureID: EvictionNoticeMessageBackground.AvailableTexture
+  bottomMargin: 0
+  fontPath: ''
+  fontSize: 80
+  fontStyle: Bold
+  friendlyName: Purchased
+  leftMargin: 0
+  rightMargin: 0
+  scrollSpeed: 0.800000012
+  topMargin: 0
+  backgroundColor:
+    - 0
+    - 255
+    - 0
+    - 1
+  localizedDescription: l"EvictionNotice_Screen_Purchased"
+  textColor:
+    - 0
+    - 128
+    - 0
+    - 1
+
 EvictionNoticeScreenMessages.MotelRoomEvicted:
   $type: gamedataScreenMessageData_Record
   autoScroll: True
@@ -101,6 +127,32 @@ EvictionNoticeScreenMessages.MotelRoomRentPaid:
     - 0
     - 1
   localizedDescription: l"EvictionNotice_Screen_PaidMotel"
+  textColor:
+    - 0
+    - 128
+    - 0
+    - 1
+
+EvictionNoticeScreenMessages.MotelRoomPurchased:
+  $type: gamedataScreenMessageData_Record
+  autoScroll: True
+  backgroundOpacity: 1
+  backgroundTextureID: EvictionNoticeMessageBackground.AvailableTexture
+  bottomMargin: 0
+  fontPath: ''
+  fontSize: 100
+  fontStyle: Bold
+  friendlyName: Purchased
+  leftMargin: 0
+  rightMargin: 0
+  scrollSpeed: 0.800000012
+  topMargin: 0
+  backgroundColor:
+    - 0
+    - 255
+    - 0
+    - 1
+  localizedDescription: l"EvictionNotice_Screen_PurchasedMotel"
   textColor:
     - 0
     - 128
@@ -184,3 +236,17 @@ EvictionNoticeScreenMessages.MotelRoomAvailable:
     - 230
     - 255
     - 1
+
+EvictionNoticeScreenMessages.Blank:
+  $type: gamedataScreenMessageData_Record
+  autoScroll: True
+  backgroundOpacity: 1
+  bottomMargin: 0
+  fontPath: ''
+  fontSize: 100
+  fontStyle: Bold
+  friendlyName: Purchased
+  leftMargin: 0
+  rightMargin: 0
+  scrollSpeed: 0.800000012
+  topMargin: 0

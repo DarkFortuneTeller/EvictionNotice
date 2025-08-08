@@ -1,5 +1,0 @@
-Apartment.nid_offer:
-  $type: gamedataPurchaseOffer_Record
-  name: LocKey#80748
-  previewImage: UIJournalIcons.apartment_purchase_watson
-  price: EconomicAssignment.vs_apartment_dlc6_apart_wat_nid

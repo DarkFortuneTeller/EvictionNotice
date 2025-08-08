@@ -39,11 +39,13 @@ public enum ENAutoPayDisableReason {
 public enum ENAutoPayMessageType {
     None = 0,
     Intro = 1,
-    DisablePaymentFailed = 2,
-    DisableNoProperty = 3,
-    DisableSettingDisabled = 4,
-    PaymentProcessed = 5,
-    PaymentReminder = 6
+    Enable = 2,
+    DisableFromAgent = 3,
+    DisablePaymentFailed = 4,
+    DisableNoProperty = 5,
+    DisableSettingDisabled = 6,
+    PaymentProcessed = 7,
+    PaymentReminder = 8
 }
 
 public class ENBillPaySystemBaseEventListeners extends ENSystemEventListener {
@@ -98,7 +100,7 @@ public class ENBillPaySystem extends ENSystem {
 	}
 
     private func SetupDebugLogging() -> Void {
-        this.debugEnabled = true;
+        this.debugEnabled = false;
     }
 
     private final func GetSystemToggleSettingValue() -> Bool {
@@ -148,7 +150,7 @@ public class ENBillPaySystem extends ENSystem {
         }
 
         this.repeatableMessages = ENResourceHandler.Get().GetRepeatableMessages();
-        ENLog(this.debugEnabled, this, "ENBillPaySystem: repeatableMessages: " + ToString(this.repeatableMessages));
+        ENLog(this, "ENBillPaySystem: repeatableMessages: " + ToString(this.repeatableMessages));
     }
     
     private func RegisterListeners() -> Void {
@@ -229,7 +231,7 @@ public class ENBillPaySystem extends ENSystem {
 
     private final func OnQuestPhaseDebugFactChanged(value: Int32) -> Void {
         if value != 0 {
-            ENLog(this.debugEnabled, this, "#### DEBUG Quest Phase Graph --- Value: " + ToString(value));
+            ENLog(this, "#### DEBUG Quest Phase Graph --- Value: " + ToString(value));
             this.QuestsSystem.SetFact(this.GetQuestPhaseGraphDebugQuestFact(), 0);
         }
     }
@@ -242,7 +244,7 @@ public class ENBillPaySystem extends ENSystem {
 
     public final func TryToSendAutoPayInvite() -> Void {
         if IsSystemEnabledAndRunning(this) && !this.autoPayInviteSent {
-            ENLog(this.debugEnabled, this, "Checking if Auto-Pay invite should be sent...");
+            ENLog(this, "Checking if Auto-Pay invite should be sent...");
             let rentedPropertyCount: Uint32 = this.PropertyStateService.GetRentedPropertyCount();
 
             if rentedPropertyCount >= Cast<Uint32>(this.Settings.autoPayMinimumPropertyCount) {
@@ -255,18 +257,18 @@ public class ENBillPaySystem extends ENSystem {
     private final func HandleAutoPay(currentDay: Int32) -> Void {
         // Gather the collection of rental systems that are due today.
         let rentalSystemsDueToday: array<ref<ENRentSystemBase>>;
-        ENLog(this.debugEnabled, this, "$$$$$$$$$$$$$$$$$$$ AutoPay Current Day: " + ToString(currentDay));
+        ENLog(this, "$$$$$$$$$$$$$$$$$$$ AutoPay Current Day: " + ToString(currentDay));
 
         for rentalSystem in this.rentalSystems {
             if rentalSystem.IsCurrentRentStateRented() {
                 let rentExpirationDay: Int32 = rentalSystem.GetRentExpirationDay();
                 if Equals(currentDay, rentExpirationDay) {
                     if Equals(rentalSystem.moveOutState, ENMoveOutState.NotMovingOut) {
-                        ENLog(this.debugEnabled, this, "$$$$$$$$$$$$$$$$$$$ Due Today: " + ToString(rentalSystem.GetPropertyDebugName()));
+                        ENLog(this, "$$$$$$$$$$$$$$$$$$$ Due Today: " + ToString(rentalSystem.GetPropertyDebugName()));
                         ArrayPush(rentalSystemsDueToday, rentalSystem);
                     }
                 } else if Equals(currentDay, rentExpirationDay - 1) {
-                    ENLog(this.debugEnabled, this, "$$$$$$$$$$$$$$$$$$$ Send Day Before Notice!");
+                    ENLog(this, "$$$$$$$$$$$$$$$$$$$ Send Day Before Notice!");
                     this.SendAutoPayMessageOfType(ENAutoPayMessageType.PaymentReminder);
                     return;
                 }
@@ -275,14 +277,14 @@ public class ENBillPaySystem extends ENSystem {
 
         // If there are any due today, calculate the total amount it would cost to pay them.
         if ArraySize(rentalSystemsDueToday) == 0 {
-            ENLog(this.debugEnabled, this, "$$$$$$$$$$$$$$$$$$$ AutoPay: No Rental Systems Due Today!");
+            ENLog(this, "$$$$$$$$$$$$$$$$$$$ AutoPay: No Rental Systems Due Today!");
             return;
         }
 
         let totalCost: Int32 = 0;
         for rentalSystemDueToday in rentalSystemsDueToday {
             let outstandingBalance: Int32 = rentalSystemDueToday.GetRentAmount();
-            ENLog(this.debugEnabled, this, "$$$$$$$$$$$$$$$$$$$ AutoPay: Rental System " + rentalSystemDueToday.GetPropertyDebugName() + " owes " + ToString(outstandingBalance));
+            ENLog(this, "$$$$$$$$$$$$$$$$$$$ AutoPay: Rental System " + rentalSystemDueToday.GetPropertyDebugName() + " owes " + ToString(outstandingBalance));
             totalCost += outstandingBalance;
         }
         totalCost += this.Settings.costAutoPayFee;
@@ -290,7 +292,7 @@ public class ENBillPaySystem extends ENSystem {
         let paid: Bool = TryToRemovePlayerMoney(totalCost);
 
         if paid {
-            ENLog(this.debugEnabled, this, "$$$$$$$$$$$$$$$$$$$ Payment successful!");
+            ENLog(this, "$$$$$$$$$$$$$$$$$$$ Payment successful!");
             for rentalSystemDueToday in rentalSystemsDueToday {
                 rentalSystemDueToday.lastPaidRentCycleStartDay = this.PropertyStateService.GetCurrentRentCycleStartDay();
                 rentalSystemDueToday.SetRentState(ENRentState.Paid);
@@ -299,7 +301,7 @@ public class ENBillPaySystem extends ENSystem {
             this.SendAutoPayMessageOfType(ENAutoPayMessageType.PaymentProcessed);
 
         } else {
-            ENLog(this.debugEnabled, this, "$$$$$$$$$$$$$$$$$$$ Payment failed!");
+            ENLog(this, "$$$$$$$$$$$$$$$$$$$ Payment failed!");
             // If the player doesn't have enough money, cancel AutoPay, send a message, and update Rent State on all systems.
             this.DisableAutoPay(ENAutoPayDisableReason.FromPaymentFailed);
             for rentalSystemDueToday in rentalSystemsDueToday {
@@ -327,7 +329,7 @@ public class ENBillPaySystem extends ENSystem {
     }
 
     private final func SetAutoPayAvailable(available: Bool) -> Void {
-        ENLog(this.debugEnabled, this, "SetAutoPayAvailable: " + ToString(available));
+        ENLog(this, "SetAutoPayAvailable: " + ToString(available));
         if available {
             this.QuestsSystem.SetFact(this.GetAutoPayAvailableQuestFact(), 1);
         } else {
@@ -336,21 +338,27 @@ public class ENBillPaySystem extends ENSystem {
     }
 
     private final func EnableAutoPay() -> Void {
-        ENLog(this.debugEnabled, this, "!! EnableAutoPay !!");
+        ENLog(this, "!! EnableAutoPay !!");
         this.QuestsSystem.SetFact(this.GetAutoPayEnabledQuestFact(), 1);
+        this.SendAutoPayMessageOfType(ENAutoPayMessageType.Enable);
     }
 
     private final func DisableAutoPay(reason: ENAutoPayDisableReason) -> Void {
-        ENLog(this.debugEnabled, this, "!! DisableAutoPay !! reason: " + ToString(reason));
+        ENLog(this, "!! DisableAutoPay !! reason: " + ToString(reason));
+        
+        let wasEnabled: Bool = this.QuestsSystem.GetFact(this.GetAutoPayEnabledQuestFact()) == 1 ? true : false;
         this.QuestsSystem.SetFact(this.GetAutoPayEnabledQuestFact(), 0);
 
-        if Equals(reason, ENAutoPayDisableReason.FromPaymentFailed) {
+        if Equals(reason, ENAutoPayDisableReason.FromAgent) {
+            this.SendAutoPayMessageOfType(ENAutoPayMessageType.DisableFromAgent);
+
+        } else if Equals(reason, ENAutoPayDisableReason.FromPaymentFailed) {
             this.SendAutoPayMessageOfType(ENAutoPayMessageType.DisablePaymentFailed);
 
         } else if Equals(reason, ENAutoPayDisableReason.FromNoProperty) {
             this.SendAutoPayMessageOfType(ENAutoPayMessageType.DisableNoProperty);
 
-        } else if Equals(reason, ENAutoPayDisableReason.FromSetting) {
+        } else if Equals(reason, ENAutoPayDisableReason.FromSetting) && wasEnabled {
             this.SendAutoPayMessageOfType(ENAutoPayMessageType.DisableSettingDisabled);
         }
     }
@@ -395,7 +403,20 @@ public class ENBillPaySystem extends ENSystem {
     public final func SendAutoPayMessageOfType(type: ENAutoPayMessageType) -> Void {
         // Mark the message as "Unread" in the Journal. In the graph, also set "Send Notification" in the Journal Bulk Entry Update
         // to allow notifications to be sent from these messages again.
-        if Equals(type, ENAutoPayMessageType.DisablePaymentFailed) {
+        
+        if Equals(type, ENAutoPayMessageType.Enable) {
+            let message: ref<JournalPhoneMessage> = this.FindRepeatableMessage("enabled");
+            if IsDefined(message) {
+                this.JournalManager.SetEntryVisited(message, false);
+            }
+        
+        } else if Equals(type, ENAutoPayMessageType.DisableFromAgent) {
+            let message: ref<JournalPhoneMessage> = this.FindRepeatableMessage("disabled_fromagent");
+            if IsDefined(message) {
+                this.JournalManager.SetEntryVisited(message, false);
+            }
+
+        } else if Equals(type, ENAutoPayMessageType.DisablePaymentFailed) {
             let message: ref<JournalPhoneMessage> = this.FindRepeatableMessage("disabled_paymentfailed");
             if IsDefined(message) {
                 this.JournalManager.SetEntryVisited(message, false);
@@ -430,19 +451,19 @@ public class ENBillPaySystem extends ENSystem {
     public final func OnTryToEnableAutoPay(value: Int32) -> Void {
         if Equals(value, 1) {
             if !this.Settings.autoPayAllowed {
-                ENLog(this.debugEnabled, this, "OnTryToEnableAutoPay: FAILED: Setting Disabled");
+                ENLog(this, "OnTryToEnableAutoPay: FAILED: Setting Disabled");
                 this.QuestsSystem.SetFact(this.GetAutoPayEnableResultQuestFact(), EnumInt<ENAutoPayEnableResult>(ENAutoPayEnableResult.FailedSettingDisabled));
 
             } else if this.PropertyStateService.GetRentedPropertyCount() == 0u {
-                ENLog(this.debugEnabled, this, "OnTryToEnableAutoPay: FAILED: No Property");
+                ENLog(this, "OnTryToEnableAutoPay: FAILED: No Property");
                 this.QuestsSystem.SetFact(this.GetAutoPayEnableResultQuestFact(), EnumInt<ENAutoPayEnableResult>(ENAutoPayEnableResult.FailedNoProperty));
 
             } else if this.GetAnyPropertyHasOutstandingBalance() {
-                ENLog(this.debugEnabled, this, "OnTryToEnableAutoPay: FAILED: Outstanding Balance");
+                ENLog(this, "OnTryToEnableAutoPay: FAILED: Outstanding Balance");
                 this.QuestsSystem.SetFact(this.GetAutoPayEnableResultQuestFact(), EnumInt<ENAutoPayEnableResult>(ENAutoPayEnableResult.FailedOutstandingBalance));
 
             } else {
-                ENLog(this.debugEnabled, this, "OnTryToEnableAutoPay: SUCCESS");
+                ENLog(this, "OnTryToEnableAutoPay: SUCCESS");
                 this.QuestsSystem.SetFact(this.GetAutoPayEnableResultQuestFact(), EnumInt<ENAutoPayEnableResult>(ENAutoPayEnableResult.Success));
                 this.EnableAutoPay();
             }

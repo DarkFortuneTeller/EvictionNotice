@@ -1,7 +1,17 @@
+// -----------------------------------------------------------------------------
+// ENApartmentScreenControllerOverrides
+// -----------------------------------------------------------------------------
+//
+// - Various wrappers that extend the functionality of apartment screens.
+//
+
+import EvictionNotice.Settings.ENSettings
+
 public enum ERentStatusExtended {
     None = 0,
     Due = 1,
-    Available = 2
+    Available = 2,
+    Purchased = 3
 }
 
 @addField(ApartmentScreenControllerPS)
@@ -10,9 +20,17 @@ private persistent let evictionNoticeManagedScreen: Bool;
 @addField(ApartmentScreenControllerPS)
 private persistent let evictionNoticeIsMotelScreen: Bool;
 
+@addField(ApartmentScreenControllerPS)
+private persistent let evictionNoticeShowMessageOnPurchase: Bool;
+
 @addMethod(ApartmentScreenControllerPS)
 private final func SetEvictionNoticeManaged() -> Void {
     this.evictionNoticeManagedScreen = true;
+}
+
+@addMethod(ApartmentScreenControllerPS)
+private final func SetShowMessageOnPurchase(show: Bool) -> Void {
+    this.evictionNoticeShowMessageOnPurchase = show;
 }
 
 @addMethod(ApartmentScreenControllerPS)
@@ -22,7 +40,6 @@ private final func GetEvictionNoticeManaged() -> Bool {
 
 @addMethod(ApartmentScreenControllerPS)
 private final func SetIsMotelScreen() -> Void {
-    FTLog("Setting Motel Screen");
     this.evictionNoticeIsMotelScreen = true;
     this.m_paidMessageRecordID = t"EvictionNoticeScreenMessages.MotelRoomRentPaid";
     this.m_overdueMessageRecordID = t"EvictionNoticeScreenMessages.MotelRoomRentOverdue";
@@ -55,6 +72,16 @@ private final func GetMessageIDForExtendedStatus(extendedStatus: ERentStatusExte
         } else {
             return t"EvictionNoticeScreenMessages.Available";
         }
+    } else if Equals(extendedStatus, ERentStatusExtended.Purchased) {
+        if this.evictionNoticeShowMessageOnPurchase {
+            if this.evictionNoticeIsMotelScreen {
+                return t"EvictionNoticeScreenMessages.MotelRoomPurchased";
+            } else {
+                return t"EvictionNoticeScreenMessages.Purchased";
+            }
+        } else {
+            return t"EvictionNoticeScreenMessages.Blank";
+        }
     }
 
     return t"";
@@ -70,7 +97,6 @@ private final func UpdateCurrentOverdue() -> Void {
 @wrapMethod(ApartmentScreenControllerPS)
 private final func InitializeRentState() -> Void {
     if this.GetEvictionNoticeManaged() {
-        FTLog("We are eviction notice managed on InitializeRentState, ignore.");
         this.m_isInitialRentStateSet = true;
     } else {
         wrappedMethod();
@@ -80,8 +106,21 @@ private final func InitializeRentState() -> Void {
 @wrapMethod(ApartmentScreenControllerPS)
 private final func ReEvaluateRentStatus() -> Void {
     if this.GetEvictionNoticeManaged() {
-        FTLog("We are eviction notice managed on ReEvaluateRentStatus, ignore.");
     } else {
         wrappedMethod();
     }
+}
+
+@wrapMethod(ApartmentScreenControllerPS)
+private final func GetInitialOverdueValue() -> Int32 {
+    this.m_maxDays = ENSettings.Get().rentalPeriodInDays - 1;
+
+    return wrappedMethod();
+}
+
+@wrapMethod(ApartmentScreenControllerPS)
+private final func GetStateChangeProbabilityValue() -> Int32 {
+    this.m_maxDays = ENSettings.Get().rentalPeriodInDays - 1;
+
+    return wrappedMethod();
 }

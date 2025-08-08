@@ -18,6 +18,8 @@ public final class ENRentSystemCorpoPlazaEventListeners extends ENRentSystemBase
 }
 
 public final class ENRentSystemCorpoPlaza extends ENRentSystemBase {
+    private let factListenerActionUpdateRequestFacts: Uint32;
+
     public final static func GetInstance(gameInstance: GameInstance) -> ref<ENRentSystemCorpoPlaza> {
 		let instance: ref<ENRentSystemCorpoPlaza> = GameInstance.GetScriptableSystemsContainer(gameInstance).Get(NameOf(ENRentSystemCorpoPlaza)) as ENRentSystemCorpoPlaza;
 		return instance;
@@ -30,6 +32,12 @@ public final class ENRentSystemCorpoPlaza extends ENRentSystemBase {
     private final func InitSpecific(attachedPlayer: ref<PlayerPuppet>) -> Void {
         // Allow the Quest Phase graph to begin executing.
         this.QuestsSystem.SetFact(this.GetSystemRunningQuestFact(), 1);
+    }
+
+    private func RegisterListeners() -> Void {
+        super.RegisterListeners();
+
+        this.factListenerActionUpdateRequestFacts = this.QuestsSystem.RegisterListener(this.GetActionUpdateRequestFacts(), this, n"OnUpdateRequestFacts");
     }
 
     //
@@ -103,12 +111,48 @@ public final class ENRentSystemCorpoPlaza extends ENRentSystemBase {
         return n"en_fact_corpoplaza_action_close_and_lock_door";
     }
 
+    public func GetActionUpdateApartmentPurchaseAllowedQuestFact() -> CName {
+        return n"en_fact_action_update_corpoplaza_purchase_allowed";
+    }
+
+    public func GetActionUpdateHasAvailableDiscountQuestFact() -> CName {
+        return n"en_fact_action_update_corpoplaza_has_available_discount";
+    }
+
+    public func GetActionSendPurchaseOfferMessageQuestFact() -> CName {
+        return n"en_fact_action_send_purchase_offer_message_corpoplaza";
+    }
+
+    public func GetActionSendPurchaseCompleteMessageQuestFact() -> CName {
+        return n"en_fact_action_send_purchase_complete_message_corpoplaza";
+    }
+
+    public final func GetActionDoRentDurationChangedCleanup() -> CName {
+        return n"en_fact_action_do_rent_duration_changed_cleanup_corpoplaza";
+    }
+
     public final func GetPlayerHasRentMoneyQuestFact() -> CName {
         return n"en_fact_corpoplaza_player_has_rent_money";
     }
 
+    public func GetApartmentPurchaseAllowedQuestFact() -> CName {
+        return n"en_fact_corpoplaza_purchase_allowed";
+    }
+
+    public func GetApartmentPurchaseAvailableQuestFact() -> CName {
+        return n"en_fact_corpoplaza_purchase_available";
+    }
+
+    public func GetPaidRentCountRequiredForLoyaltyQuestFact() -> CName {
+        return n"en_fact_corpoplaza_rent_paid_count_req_loyalty_quest";
+    }
+
+    public func GetHasAvailableDiscountQuestFact() -> CName {
+        return n"en_fact_corpoplaza_has_available_discount";
+    }
+
     public func GetCostLateFeePerDay() -> Int32 {
-        return 0;
+        return this.Settings.costCorpoPlazaLateFee;
     }
 
     public func GetRentAmount() -> Int32 {
@@ -117,6 +161,10 @@ public final class ENRentSystemCorpoPlaza extends ENRentSystemBase {
 
     public func GetSecurityDepositAmount() -> Int32 {
         return FromVariant<Int32>(TweakDBInterface.GetFlat(t"EconomicAssignment.vs_apartment_dlc6_apart_cct_dtn.overrideValue"));
+    }
+
+    public func GetPurchaseAmount() -> Int32 {
+        return 440000;
     }
 
     private final func GetApartmentDebugName() -> String {
@@ -131,10 +179,40 @@ public final class ENRentSystemCorpoPlaza extends ENRentSystemBase {
         return "$/mod/worldbuildergroup_en_corpoplaza/#worldbuildergroup_en_corpoplaza_en_apartment_screen_4";
     }
 
+    private func GetApartmentPurchaseAllowedSettingValue() -> Bool {
+        // TODO - FUTURE
+        return false;
+    }
+
+    private func GetLoyaltyQuestDiscountPctSettingValue() -> Int32 {
+        // TODO - FUTURE
+		return 0;
+    }
+
+    private func GetLoyaltyQuestPath() -> String {
+        return "quests/minor_quest/corpoplaza_loyaltyquest";
+    }
+
+    private func GetShowApartmentScreenMessageOnPurchase() -> Bool {
+        return true;
+    }
+
     // System-Specific Methods
     //
     private final func GetCorpoPlazaChosenNameQuestFact() -> CName {
         return n"en_fact_corpoplaza_chosen_name";
+    }
+
+    public func GetActionUpdateRequestFacts() -> CName {
+        return n"en_fact_action_corpoplaza_update_request_facts";
+    }
+
+    public func GetCorpoPlazaRequestFlowerStateFact() -> CName {
+        return n"en_fact_corpoplaza_flower_state";
+    }
+
+    public func GetCorpoPlazaRequestLastFlowerStateFact() -> CName {
+        return n"en_fact_last_corpoplaza_flower_state";
     }
 
     public final func GetChosenName() -> String {
@@ -160,5 +238,14 @@ public final class ENRentSystemCorpoPlaza extends ENRentSystemBase {
         }
 
         return "";
+    }
+
+    public final func OnUpdateRequestFacts(value: Int32) {
+        if Equals(value, 1) {
+            this.QuestsSystem.SetFact(this.GetCorpoPlazaRequestLastFlowerStateFact(), this.QuestsSystem.GetFact(this.GetCorpoPlazaRequestFlowerStateFact()));
+
+            // Continue.
+            this.QuestsSystem.SetFact(this.GetActionUpdateRequestFacts(), 0);
+        }
     }
 }

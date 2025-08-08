@@ -1,0 +1,20 @@
+#
+# Districts
+#
+Districts.VApartment.localizedName: l"EvictionNotice_DistrictName_MBH10"
+
+#
+# Fast Travel DataTerms
+#
+FastTravelPoints.dlc6_apart_cct_dtn_dataterm.displayName: l"EvictionNotice_LocationName_CorpoPlaza"
+FastTravelPoints.dlc6_apart_hey_gle_dataterm.displayName: l"EvictionNotice_LocationName_Glen"
+FastTravelPoints.dlc6_apart_wat_nid_dataterm.displayName: l"EvictionNotice_LocationName_Northside"
+FastTravelPoints.dlc6_apart_wbr_jpn_dataterm.displayName: l"EvictionNotice_LocationName_Japantown"
+
+#
+# Keycards
+#
+Keycards.dlc6_apart_cct_dtn_keycard.displayName: l"EvictionNotice_KeycardName_CorpoPlaza"
+Keycards.dlc6_apart_hey_gle_keycard.displayName: l"EvictionNotice_KeycardName_Glen"
+Keycards.dlc6_apart_wat_nid_keycard.displayName: l"EvictionNotice_KeycardName_Northside"
+Keycards.dlc6_apart_wbr_jpn_keycard.displayName: l"EvictionNotice_KeycardName_Japantown"

@@ -6,15 +6,13 @@
 // - Handles mod-wide system startup and shutdown.
 //
 
-// Credits: Psiberx, MisterChedda, Bill, Deceptious
-// Fixed the aspect ratio of the apartment preview images on World Map tooltips
-
-// TODO: Implement rent and eviction duration change from settings
+// TODO - Wait until at a playable scene tier before executing monetary transactions
 
 module EvictionNotice.Main
 
 import EvictionNotice.Logging.*
 import EvictionNotice.Settings.*
+import EvictionNotice.System.ENSystem
 import EvictionNotice.Services.{
     ENGameStateService,
     ENPropertyStateService
@@ -150,13 +148,13 @@ public final class ENMainSystem extends ScriptableSystem {
     //  Startup and Shutdown
     //
     private func OnAttach() -> Void {
-        ENLog(this.debugEnabled, this, "OnAttach");
+        ENLogNoSystem(this.debugEnabled, this, "OnAttach");
         this.playerAttachedCallbackID = GameInstance.GetPlayerSystem(GetGameInstance()).RegisterPlayerPuppetAttachedCallback(this, n"PlayerAttachedCallback");
     }
 
     private final func PlayerAttachedCallback(playerPuppet: ref<GameObject>) -> Void {
 		if IsDefined(playerPuppet) {
-            ENLog(this.debugEnabled, this, "PlayerAttachedCallback playerPuppet TweakDBID: " + TDBID.ToStringDEBUG((playerPuppet as PlayerPuppet).GetRecord().GetID()));
+            ENLogNoSystem(this.debugEnabled, this, "PlayerAttachedCallback playerPuppet TweakDBID: " + TDBID.ToStringDEBUG((playerPuppet as PlayerPuppet).GetRecord().GetID()));
             this.player = playerPuppet as PlayerPuppet;
 
             // Player Replacer / Act 2 Handling - If Late Init is already Done, start all systems.
@@ -176,10 +174,10 @@ public final class ENMainSystem extends ScriptableSystem {
     private final func StartAll() -> Void {
         let gameInstance = GetGameInstance();
         if !IsDefined(this.player) {
-            ENLog(true, this, "ERROR: PLAYER NOT DEFINED ON ENMainSystem:StartAll()", ENLogLevel.Error);
+            ENLogNoSystem(true, this, "ERROR: PLAYER NOT DEFINED ON ENMainSystem:StartAll()", ENLogLevel.Error);
             return;
         }
-        ENLog(this.debugEnabled, this, "!!!!! ENMainSystem:StartAll !!!!!");
+        ENLogNoSystem(true, this, "!!!!! ENMainSystem:StartAll !!!!!");
 
         // Settings
         ENSettings.GetInstance(gameInstance).Init(this.player);
@@ -205,7 +203,8 @@ public final class ENMainSystem extends ScriptableSystem {
 
         // One-Time Setup
         if !this.oneTimeSetupDone {
-            ENPropertyStateService.GetInstance(gameInstance).UpdateRentedPropertyCount();
+            GameInstance.GetQuestsSystem(GetGameInstance()).SetFact(n"en_fact_main_system_enabled", 1);
+
             this.oneTimeSetupDone = true;
         }
 
@@ -214,7 +213,7 @@ public final class ENMainSystem extends ScriptableSystem {
     }
 
     private final func ResumeAll() -> Void {
-        ENLog(this.debugEnabled, this, "!!!!! ENMainSystem:ResumeAll !!!!!");
+        ENLogNoSystem(true, this, "!!!!! ENMainSystem:ResumeAll !!!!!");
         let gameInstance = GetGameInstance();
 
         // Lifecycle Hook - Start
@@ -238,7 +237,7 @@ public final class ENMainSystem extends ScriptableSystem {
     }
 
     private final func SuspendAll() -> Void {
-        ENLog(this.debugEnabled, this, "!!!!! ENMainSystem:SuspendAll !!!!!");
+        ENLogNoSystem(true, this, "!!!!! ENMainSystem:SuspendAll !!!!!");
 
         let gameInstance = GetGameInstance();
 
@@ -268,14 +267,17 @@ public final class ENMainSystem extends ScriptableSystem {
         if ArrayContains(changedSettings, "mainSystemEnabled") {
             if settings.mainSystemEnabled {
                 this.ResumeAll();
+                ENPropertyStateService.Get().CheckRentalDurationSettings(["rentalPeriodInDays", "daysUntilEviction"]);
+                GameInstance.GetQuestsSystem(GetGameInstance()).SetFact(n"en_fact_main_system_enabled", 1);
             } else {
                 this.SuspendAll();
+                GameInstance.GetQuestsSystem(GetGameInstance()).SetFact(n"en_fact_main_system_enabled", 0);
             }
         }
     }
 
     public final func DispatchPlayerDeathEvent() -> Void {
-        ENLog(this.debugEnabled, this, "!!!!! ENMainSystem:DispatchPlayerDeathEvent !!!!!");
+        ENLogNoSystem(true, this, "!!!!! ENMainSystem:DispatchPlayerDeathEvent !!!!!");
         GameInstance.GetCallbackSystem().DispatchEvent(MainSystemPlayerDeathEvent.Create());
     }
 

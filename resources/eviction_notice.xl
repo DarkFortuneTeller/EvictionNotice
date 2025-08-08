@@ -1,9 +1,3 @@
-localization:
-  onscreens:
-    en-us: eviction_notice\localization\en-us\onscreens\eviction_notice.json
-  subtitles:
-    en-us: eviction_notice\localization\en-us\subtitles\eviction_notice_subtitles_map.json
-
 journal:
   - eviction_notice\journal\eviction_notice.journal
 
@@ -47,6 +41,18 @@ quest:
     - path: eviction_notice\quest\screenproximity\corpoplaza_screenproximity.questphase
       parent: en_combined_scope.quest
     - path: eviction_notice\quest\screenproximity\corpoplaza_npc_screenproximity.questphase
+      parent: en_combined_scope.quest
+    - path: eviction_notice\quest\purchase\glen_purchase.questphase
+      parent: en_combined_scope.quest
+    - path: eviction_notice\quest\rentpopup\northside_rentpopup.questphase
+      parent: en_combined_scope.quest
+    - path: eviction_notice\quest\rentpopup\japantown_rentpopup.questphase
+      parent: en_combined_scope.quest
+    - path: eviction_notice\quest\rentpopup\glen_rentpopup.questphase
+      parent: en_combined_scope.quest
+    - path: eviction_notice\quest\rentpopup\corpoplaza_rentpopup.questphase
+      parent: en_combined_scope.quest
+    - path: eviction_notice\quest\special\corpoplaza_requests.questphase
       parent: en_combined_scope.quest
 
 

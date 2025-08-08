@@ -12,7 +12,7 @@ import EvictionNotice.System.{
     ENSystem,
     ENSystemState
 }
-import EvictionNotice.Settings.ENSettings
+import EvictionNotice.Services.ENPropertyStateService
 
 public func HoursToGameTimeSeconds(hours: Int32) -> Float {
     return Int32ToFloat(hours) * 3600.0;
@@ -95,5 +95,5 @@ public func TryToRemovePlayerMoney(amount: Int32) -> Bool {
 }
 
 public func GetHalfDaysUntilEviction() -> Int32 {
-    return FloorF(Cast<Float>(ENSettings.Get().daysUntilEviction) * 0.5);
+    return FloorF(Cast<Float>(ENPropertyStateService.Get().RentalPeriodInDays) * 0.5);
 }

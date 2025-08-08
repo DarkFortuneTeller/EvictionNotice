@@ -1,0 +1,41 @@
+localization:
+  onscreens:
+    ar-ar: eviction_notice\localization\ar-ar\onscreens\eviction_notice.json
+    cz-cz: eviction_notice\localization\cz-cz\onscreens\eviction_notice.json
+    de-de: eviction_notice\localization\de-de\onscreens\eviction_notice.json
+    en-us: eviction_notice\localization\en-us\onscreens\eviction_notice.json
+    es-es: eviction_notice\localization\es-es\onscreens\eviction_notice.json
+    es-mx: eviction_notice\localization\es-mx\onscreens\eviction_notice.json
+    fr-fr: eviction_notice\localization\fr-fr\onscreens\eviction_notice.json
+    hu-hu: eviction_notice\localization\hu-hu\onscreens\eviction_notice.json
+    it-it: eviction_notice\localization\it-it\onscreens\eviction_notice.json
+    jp-jp: eviction_notice\localization\jp-jp\onscreens\eviction_notice.json
+    kr-kr: eviction_notice\localization\kr-kr\onscreens\eviction_notice.json
+    pl-pl: eviction_notice\localization\pl-pl\onscreens\eviction_notice.json
+    pt-br: eviction_notice\localization\pt-br\onscreens\eviction_notice.json
+    ru-ru: eviction_notice\localization\ru-ru\onscreens\eviction_notice.json
+    th-th: eviction_notice\localization\th-th\onscreens\eviction_notice.json
+    tr-tr: eviction_notice\localization\tr-tr\onscreens\eviction_notice.json
+    ua-ua: eviction_notice\localization\ua-ua\onscreens\eviction_notice.json
+    zh-cn: eviction_notice\localization\zh-cn\onscreens\eviction_notice.json
+    zh-tw: eviction_notice\localization\zh-tw\onscreens\eviction_notice.json
+  subtitles:
+    ar-ar: eviction_notice\localization\ar-ar\subtitles\eviction_notice_subtitles_map.json
+    cz-cz: eviction_notice\localization\cz-cz\subtitles\eviction_notice_subtitles_map.json
+    de-de: eviction_notice\localization\de-de\subtitles\eviction_notice_subtitles_map.json
+    en-us: eviction_notice\localization\en-us\subtitles\eviction_notice_subtitles_map.json
+    es-es: eviction_notice\localization\es-es\subtitles\eviction_notice_subtitles_map.json
+    es-mx: eviction_notice\localization\es-mx\subtitles\eviction_notice_subtitles_map.json
+    fr-fr: eviction_notice\localization\fr-fr\subtitles\eviction_notice_subtitles_map.json
+    hu-hu: eviction_notice\localization\hu-hu\subtitles\eviction_notice_subtitles_map.json
+    it-it: eviction_notice\localization\it-it\subtitles\eviction_notice_subtitles_map.json
+    jp-jp: eviction_notice\localization\jp-jp\subtitles\eviction_notice_subtitles_map.json
+    kr-kr: eviction_notice\localization\kr-kr\subtitles\eviction_notice_subtitles_map.json
+    pl-pl: eviction_notice\localization\pl-pl\subtitles\eviction_notice_subtitles_map.json
+    pt-br: eviction_notice\localization\pt-br\subtitles\eviction_notice_subtitles_map.json
+    ru-ru: eviction_notice\localization\ru-ru\subtitles\eviction_notice_subtitles_map.json
+    th-th: eviction_notice\localization\th-th\subtitles\eviction_notice_subtitles_map.json
+    tr-tr: eviction_notice\localization\tr-tr\subtitles\eviction_notice_subtitles_map.json
+    ua-ua: eviction_notice\localization\ua-ua\subtitles\eviction_notice_subtitles_map.json
+    zh-cn: eviction_notice\localization\zh-cn\subtitles\eviction_notice_subtitles_map.json
+    zh-tw: eviction_notice\localization\zh-tw\subtitles\eviction_notice_subtitles_map.json

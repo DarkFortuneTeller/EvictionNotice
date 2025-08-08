@@ -38,7 +38,7 @@ public abstract class ENSystemEventListener extends ScriptableService {
 	// Required Overrides
 	//
 	private func GetSystemInstance() -> wref<ENSystem> {
-		ENLog(true, this, "MISSING REQUIRED METHOD OVERRIDE FOR GetSystemInstance()", ENLogLevel.Error);
+		ENLogNoSystem(true, this, "MISSING REQUIRED METHOD OVERRIDE FOR GetSystemInstance()", ENLogLevel.Error);
 		return null;
 	}
 
@@ -82,7 +82,7 @@ public abstract class ENSystem extends ScriptableSystem {
 
     private func DoInitActions(attachedPlayer: ref<PlayerPuppet>) -> Void {
         this.SetupDebugLogging();
-		ENLog(this.debugEnabled, this, "Init");
+		ENLog(this, "Init");
 
         this.GetRequiredSystems();
 		this.GetSystems();
@@ -92,27 +92,27 @@ public abstract class ENSystem extends ScriptableSystem {
         this.RegisterAllRequiredDelayCallbacks();
 
         this.state = ENSystemState.Running;
-        ENLog(this.debugEnabled, this, "INIT - Current State: " + ToString(this.state));
+        ENLog(this, "INIT - Current State: " + ToString(this.state));
     }
 
     public func Suspend() -> Void {
-        ENLog(this.debugEnabled, this, "SUSPEND - Current State: " + ToString(this.state));
+        ENLog(this, "SUSPEND - Current State: " + ToString(this.state));
         if Equals(this.state, ENSystemState.Running) {
             this.state = ENSystemState.Suspended;
             this.UnregisterAllDelayCallbacks();
             this.DoPostSuspendActions();
         }
-        ENLog(this.debugEnabled, this, "SUSPEND - Current State: " + ToString(this.state));
+        ENLog(this, "SUSPEND - Current State: " + ToString(this.state));
     }
 
     public func Resume() -> Void {
-        ENLog(this.debugEnabled, this, "RESUME - Current State: " + ToString(this.state));
+        ENLog(this, "RESUME - Current State: " + ToString(this.state));
         if Equals(this.state, ENSystemState.Suspended) {
             this.state = ENSystemState.Running;
             this.RegisterAllRequiredDelayCallbacks();
             this.DoPostResumeActions();
         }
-        ENLog(this.debugEnabled, this, "RESUME - Current State: " + ToString(this.state));
+        ENLog(this, "RESUME - Current State: " + ToString(this.state));
     }
 
     public func Stop() -> Void {
@@ -216,8 +216,12 @@ public abstract class ENSystem extends ScriptableSystem {
     //
 	//	Logging
 	//
+    public final func IsDebugEnabled() -> Bool {
+        return this.debugEnabled;
+    }
+
 	private final func LogMissingOverrideError(funcName: String) -> Void {
-		ENLog(true, this, "MISSING REQUIRED METHOD OVERRIDE FOR " + funcName + "()", ENLogLevel.Error);
+		ENLog(this, "MISSING REQUIRED METHOD OVERRIDE FOR " + funcName + "()", ENLogLevel.Error);
 	}
 }
 

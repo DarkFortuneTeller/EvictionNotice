@@ -8,7 +8,6 @@
 module EvictionNotice.Services
 
 import EvictionNotice.System.*
-import EvictionNotice.DelayHelper.*
 import EvictionNotice.Utils.{
     RunGuard,
     GetHalfDaysUntilEviction
@@ -48,18 +47,11 @@ public class ENPropertyStateServiceCurrentDayUpdateEvent extends CallbackSystemE
     }
 }
 
-public class CheckCurrentDayDelayCallback extends ENDelayCallback {
-	public static func Create() -> ref<ENDelayCallback> {
-		return new CheckCurrentDayDelayCallback();
-	}
+public class EvictionNoticeCurrentDayUpdateEvent extends Event {}
 
-	public func InvalidateDelayID() -> Void {
-		ENPropertyStateService.Get().checkCurrentDayDelayID = GetInvalidDelayID();
-	}
-
-	public func Callback() -> Void {
-		ENPropertyStateService.Get().CheckCurrentDay();
-	}
+@addMethod(PlayerPuppet)
+private cb func OnEvictionNoticeCurrentDayUpdate(evt: ref<EvictionNoticeCurrentDayUpdateEvent>) -> Bool {
+    ENPropertyStateService.Get().UpdateCurrentDay();
 }
 
 public struct ENRentCycle {
@@ -74,9 +66,12 @@ class ENPropertyStateServiceEventListener extends ENSystemEventListener {
 }
 
 public final class ENPropertyStateService extends ENSystem {
+    private persistent let oneTimeSetupDone: Bool = false;
     private persistent let CurrentDay: Int32;
     private persistent let CurrentRentCycleStart: ENRentCycle;
     private persistent let NextRentCycleStart: ENRentCycle;
+    private persistent let RentalPeriodInDays: Int32;
+    private persistent let EvictionLockoutDays: Int32;
 
     private let QuestsSystem: ref<QuestsSystem>;
     private let GameStateService: ref<ENGameStateService>;
@@ -88,6 +83,8 @@ public final class ENPropertyStateService extends ENSystem {
     private let Glen: ref<ENRentSystemGlen>;
     private let CorpoPlaza: ref<ENRentSystemCorpoPlaza>;
 
+    private let dayTimeListener: Uint32;
+
     private let factListenerQuestPhaseDebug: Uint32;
     private let factListenerActionUpdateSurrenderReasonFromMoveInPendingID: Uint32;
     private let factListenerActionUpdateLastRentedPropertyCount: Uint32;
@@ -95,10 +92,6 @@ public final class ENPropertyStateService extends ENSystem {
     private let factListenerActionSetNewGameStateAct2Start: Uint32;
     private let factListenerActionSetNewGameStatePhantomLibertyStart: Uint32;
     private let factListenerActionSetNewGameStateLoadSaveStart: Uint32;
-
-    private let checkCurrentDayDelayID: DelayID;
-    //private let updateIntervalInRealTimeSeconds: Float = 30.0;
-    private let updateIntervalInRealTimeSeconds: Float = 5.0;
 
     private let lastRentSystemCheckedForEvictionLockout: ref<ENRentSystemBase>;
 
@@ -112,7 +105,7 @@ public final class ENPropertyStateService extends ENSystem {
 	}
 
     private func SetupDebugLogging() -> Void {
-        this.debugEnabled = true;
+        this.debugEnabled = false;
     }
 
     private final func GetSystemToggleSettingValue() -> Bool {
@@ -126,7 +119,13 @@ public final class ENPropertyStateService extends ENSystem {
 	}
 
     private func DoPostSuspendActions() -> Void {}
-    private func DoPostResumeActions() -> Void {}
+
+    private func DoPostResumeActions() -> Void {
+        let now: GameTime = GetGameInstance().GetGameTime();
+        this.CurrentDay = now.Days();
+
+        this.InitializeStartupTimeData(ENSettingRentStateOnNewGame.Paid);
+    }
 
     private func GetSystems() -> Void {
         let gameInstance = GetGameInstance();
@@ -155,11 +154,15 @@ public final class ENPropertyStateService extends ENSystem {
         this.factListenerActionSetNewGameStateAct2Start = this.QuestsSystem.RegisterListener(this.GetActionSetNewGameStateAct2Start(), this, n"OnSetNewGameStateAct2Start");
         this.factListenerActionSetNewGameStatePhantomLibertyStart = this.QuestsSystem.RegisterListener(this.GetActionSetNewGameStatePhantomLibertyStart(), this, n"OnSetNewGameStatePhantomLibertyStart");
         this.factListenerActionSetNewGameStateLoadSaveStart = this.QuestsSystem.RegisterListener(this.GetActionSetNewGameStateLoadSaveStart(), this, n"OnSetNewGameStateLoadSaveStart");
+
+        // Update at midnight each day.
+        let now: GameTime = GetGameInstance().GetGameTime();
+        let dayTomorrow: Int32 = now.Days() + 1;
+        let midnightTomorrow: GameTime = GameTime.MakeGameTime(dayTomorrow, 0);
+        this.dayTimeListener = GameInstance.GetTimeSystem(GetGameInstance()).RegisterListener(this.player, new EvictionNoticeCurrentDayUpdateEvent(), midnightTomorrow, 0);
     }
 
-    private func RegisterAllRequiredDelayCallbacks() -> Void {
-        this.RegisterCheckCurrentDayDelayCallback();
-    }
+    private func RegisterAllRequiredDelayCallbacks() -> Void {}
 
     private func UnregisterListeners() -> Void {
         this.QuestsSystem.UnregisterListener(this.GetQuestPhaseGraphDebugQuestFact(), this.factListenerQuestPhaseDebug);
@@ -182,33 +185,59 @@ public final class ENPropertyStateService extends ENSystem {
 
         this.QuestsSystem.UnregisterListener(this.GetActionSetNewGameStateLoadSaveStart(), this.factListenerActionSetNewGameStateLoadSaveStart);
         this.factListenerActionSetNewGameStateLoadSaveStart = 0u;
+
+        GameInstance.GetTimeSystem(GetGameInstance()).UnregisterListener(this.dayTimeListener);
+        this.dayTimeListener = 0u;
     }
     
-    private func UnregisterAllDelayCallbacks() -> Void {
-        this.UnregisterCheckCurrentDayDelayCallback();
+    private func UnregisterAllDelayCallbacks() -> Void {}
+    public func OnTimeSkipFinished(data: ENTimeSkipData) -> Void {}
+
+    public func OnSettingChangedSpecific(changedSettings: array<String>) -> Void {
+        if IsSystemEnabledAndRunning(this) {
+            this.CheckRentalDurationSettings(changedSettings);
+        }
     }
 
-    public func OnTimeSkipFinished(data: ENTimeSkipData) -> Void {}
-    public func OnSettingChangedSpecific(changedSettings: array<String>) -> Void {}
+    public final func CheckRentalDurationSettings(changedSettings: array<String>) -> Void {
+        if ArrayContains(changedSettings, "rentalPeriodInDays") {
+            if NotEquals(this.RentalPeriodInDays, this.Settings.rentalPeriodInDays) {
+                ENLog(this, "@@@ @@@ @@@ rentalPeriodInDays has been updated, reinitialize time values!");
+                this.RentalPeriodInDays = this.Settings.rentalPeriodInDays;
+
+                let now: GameTime = GetGameInstance().GetGameTime();
+                this.CurrentDay = now.Days();
+                this.ReinitializeStartupTimeData();
+            } else {
+                ENLog(this, "@@@ @@@ @@@ rentalPeriodInDays has a non-default value, but is the same as the internal system state; continuing.");
+            }
+        }
+    }
 
     private func InitSpecific(attachedPlayer: ref<PlayerPuppet>) -> Void {
-        // Initialize the current and next rent cycle start game times if not initialized
-        if !this.CurrentRentCycleStart.initialized || !this.NextRentCycleStart.initialized {
-            let now: GameTime = GetGameInstance().GetGameTime();
-            this.CurrentDay = now.Days();
-        }
+        let now: GameTime = GetGameInstance().GetGameTime();
+        this.CurrentDay = now.Days();
 
-        ENLog(this.debugEnabled, this, "%%%%%%%%%%%%% CurrentDay: " + ToString(this.CurrentDay));
+        ENLog(this, "%%%%%%%%%%%%% CurrentDay: " + ToString(this.CurrentDay));
+
+        if !this.oneTimeSetupDone {
+            this.RentalPeriodInDays = this.Settings.rentalPeriodInDays;
+            this.EvictionLockoutDays = this.Settings.evictionLockoutDays;
+
+            this.UpdateRentedPropertyCount();
+
+            this.oneTimeSetupDone = true;
+        }
     }
 
     //
 	//	RunGuard Protected Methods
 	//
-	protected cb func CheckCurrentDay() -> Void {
+	public final func UpdateCurrentDay() -> Void {
 		if RunGuard(this) { return; }
-		ENLog(this.debugEnabled, this, "CheckCurrentDay");
+		ENLog(this, "CheckCurrentDay");
 
-		if this.GameStateService.IsValidGameState("ENPropertyStateService:CheckCurrentDay") {
+		if this.GameStateService.IsValidGameState(this) {
             let now: GameTime = GetGameInstance().GetGameTime();
             if now.Days() > this.CurrentDay {
                 this.CurrentDay = now.Days();
@@ -221,10 +250,8 @@ public final class ENPropertyStateService extends ENSystem {
             }
 		}
 
-		this.RegisterCheckCurrentDayDelayCallback();
-
-        ENLog(this.debugEnabled, this, "CurrentRentCycleStart.day: " + ToString(this.CurrentRentCycleStart.day));
-        ENLog(this.debugEnabled, this, "NextRentCycleStart.day: " + ToString(this.NextRentCycleStart.day));
+        ENLog(this, "CurrentRentCycleStart.day: " + ToString(this.CurrentRentCycleStart.day));
+        ENLog(this, "NextRentCycleStart.day: " + ToString(this.NextRentCycleStart.day));
 	}
 
     //
@@ -266,6 +293,10 @@ public final class ENPropertyStateService extends ENSystem {
         return n"en_fact_pending_movein_apartment_id";
     }
 
+    public func GetPendingPurchaseApartmentIDQuestFact() -> CName {
+        return n"en_fact_pending_purchase_apartment_id";
+    }
+
     public final func GetRentedPropertyCountQuestFact() -> CName {
         return n"en_fact_last_rented_property_count";
     }
@@ -288,7 +319,7 @@ public final class ENPropertyStateService extends ENSystem {
 
     private final func OnQuestPhaseDebugFactChanged(value: Int32) -> Void {
         if value != 0 {
-            ENLog(this.debugEnabled, this, "#### DEBUG Quest Phase Graph --- Value: " + ToString(value));
+            ENLog(this, "#### DEBUG Quest Phase Graph --- Value: " + ToString(value));
             this.QuestsSystem.SetFact(this.GetQuestPhaseGraphDebugQuestFact(), 0);
         }
     }
@@ -301,35 +332,39 @@ public final class ENPropertyStateService extends ENSystem {
         return this.QuestsSystem.GetFact(this.GetPendingMoveInApartmentIDQuestFact());
     }
 
+    public final func GetPendingPurchaseApartmentID() -> Int32 {
+        return this.QuestsSystem.GetFact(this.GetPendingPurchaseApartmentIDQuestFact());
+    }
+
     public final func GetSurrenderReasonFromMoveInPendingID() -> ENSurrenderReason {
         return IntEnum<ENSurrenderReason>(this.QuestsSystem.GetFact(this.GetSurrenderReasonFromMoveInPendingIDQuestFact()));
     }
 
     public final func OnUpdateSurrenderReasonFromMoveInPendingIDActionFactChanged(value: Int32) -> Void {
         if Equals(value, 1) {
-            ENLog(this.debugEnabled, this, "OnUpdateSurrenderReasonFromMoveInPendingIDActionFactChanged");
+            ENLog(this, "OnUpdateSurrenderReasonFromMoveInPendingIDActionFactChanged");
 
             let pendingMoveInRentalProperty: ENRentalProperty = this.GetRentalPropertyByID(this.GetPendingMoveInApartmentID());
             let rentSystem: ref<ENRentSystemBase> = this.GetRentalSystemFromRentalProperty(pendingMoveInRentalProperty);
             let rentState: ENRentState = rentSystem.GetRentState();
 
-            ENLog(this.debugEnabled, this, "    rentState of property " + ToString(pendingMoveInRentalProperty) + " = " + ToString(rentState));
+            ENLog(this, "    rentState of property " + ToString(pendingMoveInRentalProperty) + " = " + ToString(rentState));
 
             if Equals(rentState, ENRentState.MovedOut) {
                 this.QuestsSystem.SetFact(this.GetSurrenderReasonFromMoveInPendingIDQuestFact(), EnumInt<ENSurrenderReason>(ENSurrenderReason.MovedOut));
-                ENLog(this.debugEnabled, this, "    setting " + NameToString(this.GetSurrenderReasonFromMoveInPendingIDQuestFact()) + " to " + ToString(EnumInt<ENSurrenderReason>(ENSurrenderReason.MovedOut)));
+                ENLog(this, "    setting " + NameToString(this.GetSurrenderReasonFromMoveInPendingIDQuestFact()) + " to " + ToString(EnumInt<ENSurrenderReason>(ENSurrenderReason.MovedOut)));
             } else if Equals(rentState, ENRentState.Evicted) {
                 this.QuestsSystem.SetFact(this.GetSurrenderReasonFromMoveInPendingIDQuestFact(), EnumInt<ENSurrenderReason>(ENSurrenderReason.Evicted));
                 
                 let lockoutRemainingDays: Int32 = this.GetEvictionLockoutRemainingDays(rentSystem);
-                ENLog(this.debugEnabled, this, "    setting " + NameToString(this.GetEvictionLockoutRemainingDaysQuestFact()) + " to " + lockoutRemainingDays);
+                ENLog(this, "    setting " + NameToString(this.GetEvictionLockoutRemainingDaysQuestFact()) + " to " + lockoutRemainingDays);
                 this.QuestsSystem.SetFact(this.GetEvictionLockoutRemainingDaysQuestFact(), lockoutRemainingDays);
                 
                 this.SetLastRentSystemCheckedForEvictionLockout(rentSystem);
-                ENLog(this.debugEnabled, this, "    setting " + NameToString(this.GetSurrenderReasonFromMoveInPendingIDQuestFact()) + " to " + ToString(EnumInt<ENSurrenderReason>(ENSurrenderReason.Evicted)));
+                ENLog(this, "    setting " + NameToString(this.GetSurrenderReasonFromMoveInPendingIDQuestFact()) + " to " + ToString(EnumInt<ENSurrenderReason>(ENSurrenderReason.Evicted)));
             }
             
-            ENLog(this.debugEnabled, this, "    Continuing...");
+            ENLog(this, "    Continuing...");
             this.QuestsSystem.SetFact(this.GetActionUpdateSurrenderReasonFromMoveInPendingIDQuestFact(), 0);
         }
     }
@@ -353,20 +388,46 @@ public final class ENPropertyStateService extends ENSystem {
 
     public final func OnSetNewGameStateAct2Start(value: Int32) -> Void {
         if Equals(value, 1) {
-            ENLog(this.debugEnabled, this, "************ OnSetNewGameStateAct2Start ************");
+            ENLog(this, "************ OnSetNewGameStateAct2Start ************");
+
+            // Send the correct fact value to megabuildingh10_payrent.questphase based on the intended rent state and how long the rental period is
             this.InitializeStartupTimeData(this.Settings.H10RentStateOnNewGameAct2);
-            this.QuestsSystem.SetFact(this.GetMBH10NewGameStateOnStartQuestFact(), EnumInt<ENSettingRentStateOnNewGame>(this.Settings.H10RentStateOnNewGameAct2));
+
+            let rentStateSetting: ENSettingRentStateOnNewGame = this.Settings.H10RentStateOnNewGameAct2;
+            if Equals(rentStateSetting, ENSettingRentStateOnNewGame.Paid) {
+                this.QuestsSystem.SetFact(this.GetMBH10NewGameStateOnStartQuestFact(), 0);
+            } if Equals(rentStateSetting, ENSettingRentStateOnNewGame.Due) {
+                this.QuestsSystem.SetFact(this.GetMBH10NewGameStateOnStartQuestFact(), 1);
+            } else if Equals(rentStateSetting, ENSettingRentStateOnNewGame.Overdue) {
+                let newGameStateOnStartFactValue: Int32 = this.RentalPeriodInDays == 2 ? 3 : 2;
+                this.QuestsSystem.SetFact(this.GetMBH10NewGameStateOnStartQuestFact(), newGameStateOnStartFactValue);
+            } else if Equals(rentStateSetting, ENSettingRentStateOnNewGame.Evicted) {
+                this.QuestsSystem.SetFact(this.GetMBH10NewGameStateOnStartQuestFact(), 4);
+            }
 
             this.QuestsSystem.SetFact(this.GetActionSetNewGameStateAct2Start(), 0);
         }
-        
     }
 
     public final func OnSetNewGameStatePhantomLibertyStart(value: Int32) -> Void {
         if Equals(value, 1) {
-            ENLog(this.debugEnabled, this, "************ OnSetNewGameStatePhantomLibertyStart ************");
+            ENLog(this, "************ OnSetNewGameStatePhantomLibertyStart ************");
+            
+
+            // Send the correct fact value to megabuildingh10_payrent.questphase based on the intended rent state and how long the rental period is
             this.InitializeStartupTimeData(this.Settings.H10RentStateOnNewGamePhantomLiberty);
-            this.QuestsSystem.SetFact(this.GetMBH10NewGameStateOnStartQuestFact(), EnumInt<ENSettingRentStateOnNewGame>(this.Settings.H10RentStateOnNewGamePhantomLiberty));
+
+            let rentStateSetting: ENSettingRentStateOnNewGame = this.Settings.H10RentStateOnNewGamePhantomLiberty;
+            if Equals(rentStateSetting, ENSettingRentStateOnNewGame.Paid) {
+                this.QuestsSystem.SetFact(this.GetMBH10NewGameStateOnStartQuestFact(), 0);
+            } if Equals(rentStateSetting, ENSettingRentStateOnNewGame.Due) {
+                this.QuestsSystem.SetFact(this.GetMBH10NewGameStateOnStartQuestFact(), 1);
+            } else if Equals(rentStateSetting, ENSettingRentStateOnNewGame.Overdue) {
+                let newGameStateOnStartFactValue: Int32 = this.RentalPeriodInDays == 2 ? 3 : 2;
+                this.QuestsSystem.SetFact(this.GetMBH10NewGameStateOnStartQuestFact(), newGameStateOnStartFactValue);
+            } else if Equals(rentStateSetting, ENSettingRentStateOnNewGame.Evicted) {
+                this.QuestsSystem.SetFact(this.GetMBH10NewGameStateOnStartQuestFact(), 4);
+            }
 
             this.QuestsSystem.SetFact(this.GetActionSetNewGameStatePhantomLibertyStart(), 0);
         }
@@ -374,7 +435,7 @@ public final class ENPropertyStateService extends ENSystem {
 
     public final func OnSetNewGameStateLoadSaveStart(value: Int32) -> Void {
         if Equals(value, 1) {
-            ENLog(this.debugEnabled, this, "************ OnSetNewGameStateLoadSaveStart ************");
+            ENLog(this, "************ OnSetNewGameStateLoadSaveStart ************");
             this.InitializeStartupTimeData(ENSettingRentStateOnNewGame.Paid);
             this.QuestsSystem.SetFact(this.GetMBH10NewGameStateOnStartQuestFact(), 0);
 
@@ -383,7 +444,7 @@ public final class ENPropertyStateService extends ENSystem {
     }
 
     private final func InitializeStartupTimeData(newGameRentState: ENSettingRentStateOnNewGame) -> Void {
-        ENLog(this.debugEnabled, this, "************ InitializeStartupTimeData ************");
+        ENLog(this, "************ InitializeStartupTimeData ************");
 
         if Equals(newGameRentState, ENSettingRentStateOnNewGame.Paid) || Equals(newGameRentState, ENSettingRentStateOnNewGame.Due) || Equals(newGameRentState, ENSettingRentStateOnNewGame.Evicted) {
             this.CurrentRentCycleStart.day = this.CurrentDay;
@@ -393,7 +454,7 @@ public final class ENPropertyStateService extends ENSystem {
             this.CurrentRentCycleStart.initialized = true;
         }
 
-        this.NextRentCycleStart.day = this.CurrentRentCycleStart.day + this.Settings.rentalPeriodInDays;
+        this.NextRentCycleStart.day = this.CurrentRentCycleStart.day + this.RentalPeriodInDays;
         this.NextRentCycleStart.initialized = true;
 
         let lastPaidDay: Int32;
@@ -403,15 +464,15 @@ public final class ENPropertyStateService extends ENSystem {
             initialRentState = ENRentState.Paid;
 
         } else if Equals(newGameRentState, ENSettingRentStateOnNewGame.Due) {
-            lastPaidDay = this.CurrentRentCycleStart.day - this.Settings.rentalPeriodInDays;
+            lastPaidDay = this.CurrentRentCycleStart.day - this.RentalPeriodInDays;
             initialRentState = ENRentState.Due;
 
         } else if Equals(newGameRentState, ENSettingRentStateOnNewGame.Overdue) {
-            lastPaidDay = this.CurrentRentCycleStart.day - this.Settings.rentalPeriodInDays;
+            lastPaidDay = this.CurrentRentCycleStart.day - this.RentalPeriodInDays;
             initialRentState = ENRentState.OverdueSecondWarning;
 
         } else if Equals(newGameRentState, ENSettingRentStateOnNewGame.Evicted) {
-            lastPaidDay = this.CurrentRentCycleStart.day - (this.Settings.rentalPeriodInDays - this.Settings.daysUntilEviction);
+            lastPaidDay = this.CurrentRentCycleStart.day - (this.RentalPeriodInDays * 2);
             initialRentState = ENRentState.Evicted;
 
         }
@@ -445,6 +506,49 @@ public final class ENPropertyStateService extends ENSystem {
             this.CorpoPlaza.SetRentState(initialRentState);
         } else {
             this.CorpoPlaza.SetRentState(ENRentState.NeverRented);
+        }
+    }
+
+    // Called when the Rent Duration setting has changed.
+    private final func ReinitializeStartupTimeData() -> Void {
+        ENLog(this, "************ ReinitializeStartupTimeData ************");
+
+        this.CurrentRentCycleStart.day = this.CurrentDay;
+        this.CurrentRentCycleStart.initialized = true;
+
+        this.NextRentCycleStart.day = this.CurrentRentCycleStart.day + this.RentalPeriodInDays;
+        this.NextRentCycleStart.initialized = true;
+
+        let lastPaidDay: Int32 = this.CurrentRentCycleStart.day;
+
+        if this.MBH10.IsCurrentRentStateRented() {
+            this.QuestsSystem.SetFact(this.MBH10.GetActionDoRentDurationChangedCleanup(), 1);
+            this.MBH10.lastPaidRentCycleStartDay = lastPaidDay;
+            this.MBH10.SetRentState(ENRentState.Paid);
+        }
+
+        if this.Northside.IsCurrentRentStateRented() {
+            this.QuestsSystem.SetFact(this.Northside.GetActionDoRentDurationChangedCleanup(), 1);
+            this.Northside.lastPaidRentCycleStartDay = lastPaidDay;
+            this.Northside.SetRentState(ENRentState.Paid);
+        }
+
+        if this.Japantown.IsCurrentRentStateRented() {
+            this.QuestsSystem.SetFact(this.Japantown.GetActionDoRentDurationChangedCleanup(), 1);
+            this.Japantown.lastPaidRentCycleStartDay = lastPaidDay;
+            this.Japantown.SetRentState(ENRentState.Paid);
+        }
+
+        if this.Glen.IsCurrentRentStateRented() {
+            this.QuestsSystem.SetFact(this.Glen.GetActionDoRentDurationChangedCleanup(), 1);
+            this.Glen.lastPaidRentCycleStartDay = lastPaidDay;
+            this.Glen.SetRentState(ENRentState.Paid);
+        }
+
+        if this.CorpoPlaza.IsCurrentRentStateRented() {
+            this.QuestsSystem.SetFact(this.CorpoPlaza.GetActionDoRentDurationChangedCleanup(), 1);
+            this.CorpoPlaza.lastPaidRentCycleStartDay = lastPaidDay;
+            this.CorpoPlaza.SetRentState(ENRentState.Paid);
         }
     }
 
@@ -496,7 +600,7 @@ public final class ENPropertyStateService extends ENSystem {
 
     public final func UpdateRentedPropertyCount() -> Void {
         this.QuestsSystem.SetFact(this.GetRentedPropertyCountQuestFact(), Cast<Int32>(this.GetRentedPropertyCount()));
-        ENLog(this.debugEnabled, this, "The rented property count is now: " + ToString(this.GetRentedPropertyCount()));
+        ENLog(this, "The rented property count is now: " + ToString(this.GetRentedPropertyCount()));
 
         this.BillPay.TryToSendAutoPayInvite();
     }
@@ -531,7 +635,7 @@ public final class ENPropertyStateService extends ENSystem {
     // to avoid potentially offsetting by +/- 1 day depending on the moment this function is called.
     public final func AdvanceRentCycle() -> Void {
         this.CurrentRentCycleStart.day = this.NextRentCycleStart.day;
-        this.NextRentCycleStart.day = this.CurrentRentCycleStart.day + this.Settings.rentalPeriodInDays;
+        this.NextRentCycleStart.day = this.CurrentRentCycleStart.day + this.RentalPeriodInDays;
     }
 
     public final func GetCurrentDay() -> Int32 {
@@ -548,7 +652,7 @@ public final class ENPropertyStateService extends ENSystem {
 
     public final func GetDayOfCurrentRentCycle() -> Int32 {
         let now: GameTime = GetGameInstance().GetGameTime();
-        return this.Settings.rentalPeriodInDays - (this.GetNextRentCycleStartDay() - now.Days());
+        return this.RentalPeriodInDays - (this.GetNextRentCycleStartDay() - now.Days());
     }
 
     public final func GetDaysLeftInRentCycle() -> Int32 {
@@ -561,28 +665,23 @@ public final class ENPropertyStateService extends ENSystem {
     }
 
     private final func DispatchCurrentDayUpdateEvent() -> Void {
-        ENLog(this.debugEnabled, this, "ENPropertyStateService:DispatchCurrentDayUpdateEvent");
+        ENLog(this, "ENPropertyStateService:DispatchCurrentDayUpdateEvent");
         GameInstance.GetCallbackSystem().DispatchEvent(ENPropertyStateServiceCurrentDayUpdateEvent.Create(this.CurrentDay));
     }
 
     public final func GetEvictionLockoutRemainingDays(rentalSystem: ref<ENRentSystemBase>) -> Int32 {
-        return (rentalSystem.lastDayEvicted + this.Settings.evictionLockoutDays) - this.GetCurrentDay();
+        ENLog(this, "   lastDayEvicted: " + ToString(rentalSystem.lastDayEvicted));
+        ENLog(this, "   evictionLockoutDays: " + ToString(this.Settings.evictionLockoutDays));
+        ENLog(this, "   currentDay: " + ToString(this.GetCurrentDay()));
+        let remainingDays: Int32 = (rentalSystem.lastDayEvicted + this.Settings.evictionLockoutDays) - this.GetCurrentDay();
+
+        ENLog(this, "   remainingDays: " + ToString(remainingDays));
+        return remainingDays;
     }
 
     public final func SetLastRentSystemCheckedForEvictionLockout(rentalSystem: ref<ENRentSystemBase>) -> Void {
         this.lastRentSystemCheckedForEvictionLockout = rentalSystem;
     }
-
-    //
-    //  Registration
-    //
-    private final func RegisterCheckCurrentDayDelayCallback() -> Void {
-		RegisterENDelayCallback(this.DelaySystem, CheckCurrentDayDelayCallback.Create(), this.checkCurrentDayDelayID, this.updateIntervalInRealTimeSeconds);
-	}
-
-    private final func UnregisterCheckCurrentDayDelayCallback() -> Void {
-		UnregisterENDelayCallback(this.DelaySystem, this.checkCurrentDayDelayID);
-	}
 
     //
     //  Text Replacement
@@ -611,26 +710,31 @@ public final class ENPropertyStateService extends ENSystem {
             this.ReplaceAliasTokenWithNumber(plainTxt, "{EN_ALIAS_COST_H10_BALANCE}", this.MBH10.GetOutstandingBalance(), euroDollar, true);
             this.ReplaceAliasTokenWithNumber(plainTxt, "{EN_ALIAS_COST_H10_LATEFEE}", this.MBH10.GetCostLateFeePerDay(), euroDollar, true);
             this.ReplaceAliasTokenWithNumber(plainTxt, "{EN_ALIAS_COST_H10_DEPOSIT}", this.MBH10.GetSecurityDepositAmount(), euroDollar, true);
+            this.ReplaceAliasTokenWithNumber(plainTxt, "{EN_ALIAS_COST_PURCHASE_MBH10}", this.MBH10.GetPurchaseAmount(), euroDollar, true);
 
             this.ReplaceAliasTokenWithNumber(plainTxt, "{EN_ALIAS_COST_NORTHSIDE_BALANCE_NOLATEFEE}", this.Northside.GetRentAmount(), euroDollar, true);
             this.ReplaceAliasTokenWithNumber(plainTxt, "{EN_ALIAS_COST_NORTHSIDE_BALANCE}", this.Northside.GetOutstandingBalance(), euroDollar, true);
             this.ReplaceAliasTokenWithNumber(plainTxt, "{EN_ALIAS_COST_NORTHSIDE_LATEFEE}", this.Northside.GetCostLateFeePerDay(), euroDollar, true);
             this.ReplaceAliasTokenWithNumber(plainTxt, "{EN_ALIAS_COST_NORTHSIDE_DEPOSIT}", this.Northside.GetSecurityDepositAmount(), euroDollar, true);
+            this.ReplaceAliasTokenWithNumber(plainTxt, "{EN_ALIAS_COST_PURCHASE_NORTHSIDE}", this.Northside.GetPurchaseAmount(), euroDollar, true);
 
             this.ReplaceAliasTokenWithNumber(plainTxt, "{EN_ALIAS_COST_JAPANTOWN_BALANCE_NOLATEFEE}", this.Japantown.GetRentAmount(), euroDollar, true);
             this.ReplaceAliasTokenWithNumber(plainTxt, "{EN_ALIAS_COST_JAPANTOWN_BALANCE}", this.Japantown.GetOutstandingBalance(), euroDollar, true);
             this.ReplaceAliasTokenWithNumber(plainTxt, "{EN_ALIAS_COST_JAPANTOWN_LATEFEE}", this.Japantown.GetCostLateFeePerDay(), euroDollar, true);
             this.ReplaceAliasTokenWithNumber(plainTxt, "{EN_ALIAS_COST_JAPANTOWN_DEPOSIT}", this.Japantown.GetSecurityDepositAmount(), euroDollar, true);
+            this.ReplaceAliasTokenWithNumber(plainTxt, "{EN_ALIAS_COST_PURCHASE_JAPANTOWN}", this.Japantown.GetPurchaseAmount(), euroDollar, true);
 
             this.ReplaceAliasTokenWithNumber(plainTxt, "{EN_ALIAS_COST_GLEN_BALANCE_NOLATEFEE}", this.Glen.GetRentAmount(), euroDollar, true);
             this.ReplaceAliasTokenWithNumber(plainTxt, "{EN_ALIAS_COST_GLEN_BALANCE}", this.Glen.GetOutstandingBalance(), euroDollar, true);
             this.ReplaceAliasTokenWithNumber(plainTxt, "{EN_ALIAS_COST_GLEN_LATEFEE}", this.Glen.GetCostLateFeePerDay(), euroDollar, true);
-            //this.ReplaceAliasTokenWithNumber(plainTxt, "{EN_ALIAS_COST_GLEN_DEPOSIT}", this.Glen.GetSecurityDepositAmount(), euroDollar, true);
+            this.ReplaceAliasTokenWithNumber(plainTxt, "{EN_ALIAS_COST_GLEN_DEPOSIT}", this.Glen.GetSecurityDepositAmount(), euroDollar, true);
+            this.ReplaceAliasTokenWithNumber(plainTxt, "{EN_ALIAS_COST_PURCHASE_GLEN}", this.Glen.GetPurchaseAmount(), euroDollar, true);
 
             this.ReplaceAliasTokenWithNumber(plainTxt, "{EN_ALIAS_COST_CORPOPLAZA_BALANCE_NOLATEFEE}", this.CorpoPlaza.GetRentAmount(), euroDollar, true);
             this.ReplaceAliasTokenWithNumber(plainTxt, "{EN_ALIAS_COST_CORPOPLAZA_BALANCE}", this.CorpoPlaza.GetOutstandingBalance(), euroDollar, true);
-            //this.ReplaceAliasTokenWithNumber(plainTxt, "{EN_ALIAS_COST_CORPOPLAZA_LATEFEE}", this.CorpoPlaza.GetCostLateFeePerDay(), euroDollar, true);
-            //this.ReplaceAliasTokenWithNumber(plainTxt, "{EN_ALIAS_COST_CORPOPLAZA_DEPOSIT}", this.CorpoPlaza.GetSecurityDepositAmount(), euroDollar, true);
+            this.ReplaceAliasTokenWithNumber(plainTxt, "{EN_ALIAS_COST_CORPOPLAZA_LATEFEE}", this.CorpoPlaza.GetCostLateFeePerDay(), euroDollar, true);
+            this.ReplaceAliasTokenWithNumber(plainTxt, "{EN_ALIAS_COST_CORPOPLAZA_DEPOSIT}", this.CorpoPlaza.GetSecurityDepositAmount(), euroDollar, true);
+            this.ReplaceAliasTokenWithNumber(plainTxt, "{EN_ALIAS_COST_PURCHASE_CORPOPLAZA}", this.CorpoPlaza.GetPurchaseAmount(), euroDollar, true);
 
             this.ReplaceAliasTokenWithNumber(plainTxt, "{EN_ALIAS_COST_EZBOB_FEE}", this.EZEstates.GetAgentFee(), euroDollar, true);
             this.ReplaceAliasTokenWithNumber(plainTxt, "{EN_ALIAS_COST_SELECTED_MOVE_IN}", this.EZEstates.GetOutstandingBalanceForProperty(this.GetPendingMoveInApartmentID()), euroDollar, true);
@@ -656,6 +760,7 @@ public final class ENPropertyStateService extends ENSystem {
             //this.ReplaceAliasTokenWithNumber(plainTxt, "{EN_ALIAS_DAYS_CORPOPLAZA_OVERDUE_WARN3}", this.CorpoPlaza.GetOverdueFinalWarningDay() - this.CorpoPlaza.GetRentExpirationDay());
 
             this.ReplaceAliasTokenWithNumber(plainTxt, "{EN_ALIAS_DAYS_RENTDUE}", this.GetLastQueriedDaysLeftInRentCycle());
+            this.ReplaceAliasTokenWithNumber(plainTxt, "{EN_ALIAS_DAYS_RENTALPERIOD}", this.Settings.rentalPeriodInDays);
             this.ReplaceAliasTokenWithNumber(plainTxt, "{EN_ALIAS_DAYS_EVICTION_LOCKOUT}", this.QuestsSystem.GetFact(this.GetEvictionLockoutRemainingDaysQuestFact()));
         }
 
@@ -667,6 +772,8 @@ public final class ENPropertyStateService extends ENSystem {
     }
 }
 
+//  WorldMapTooltipController - Add rent information to the World Map tooltips
+//
 @wrapMethod(WorldMapTooltipController)
 public func SetData(const data: script_ref<WorldMapTooltipData>, menu: ref<WorldMapMenuGameController>) -> Void {
     wrappedMethod(data, menu);
@@ -710,10 +817,23 @@ public func SetData(const data: script_ref<WorldMapTooltipData>, menu: ref<World
     }
 }
 
+//  WorldMapTooltipController - Reset the size of the preview image back to the default
+//
 @wrapMethod(WorldMapTooltipController)
 protected final func Reset() -> Void {
     wrappedMethod();
-    // Reset the size of the preview image back to the default
     let previewImageSize: Vector2 = new Vector2(594.0, 194.0);
     inkWidgetRef.SetSize(this.m_linkImage, previewImageSize);
+}
+
+@wrapMethod(PopupsManager)
+private final func ShowTutorial() -> Void {
+    let oldMessage: String = GetLocalizedText(this.m_tutorialData.message);
+    let newMessage: String = ENPropertyStateService.Get().ReplaceEvictionNoticeWildcards(oldMessage);
+
+    if NotEquals(oldMessage, newMessage) {
+        this.m_tutorialData.message = newMessage;
+    }
+
+    wrappedMethod();
 }

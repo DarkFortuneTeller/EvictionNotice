@@ -11,12 +11,8 @@ public final class ENRentSystemMBH10EventListeners extends ENRentSystemBaseEvent
 }
 
 public final class ENRentSystemMBH10 extends ENRentSystemBase {
-    public final static func GetSystemName() -> CName {
-        return n"EvictionNotice.Gameplay.ENRentSystemMBH10";
-    }
-
     public final static func GetInstance(gameInstance: GameInstance) -> ref<ENRentSystemMBH10> {
-		let instance: ref<ENRentSystemMBH10> = GameInstance.GetScriptableSystemsContainer(gameInstance).Get(ENRentSystemMBH10.GetSystemName()) as ENRentSystemMBH10;
+		let instance: ref<ENRentSystemMBH10> = GameInstance.GetScriptableSystemsContainer(gameInstance).Get(NameOf(ENRentSystemMBH10)) as ENRentSystemMBH10;
 		return instance;
 	}
 
@@ -27,6 +23,18 @@ public final class ENRentSystemMBH10 extends ENRentSystemBase {
     private final func InitSpecific(attachedPlayer: ref<PlayerPuppet>) -> Void {
         // Allow the Quest Phase graph to begin executing.
         this.QuestsSystem.SetFact(this.GetSystemRunningQuestFact(), 1);
+    }
+
+    // Always make MBH10 available when Eviction Notice is disabled.
+    private func DoPostSuspendActions() -> Void {
+        this.SetRequiredPaidAndOccupancyStates();
+        this.UnlockApartmentDoor();
+    }
+
+    // Always make MBH10 available when Eviction Notice is re-enabled.
+    private func DoPostResumeActions() -> Void {
+        this.SetRequiredPaidAndOccupancyStates();
+        this.UnlockApartmentDoor();
     }
 
     //
@@ -101,8 +109,44 @@ public final class ENRentSystemMBH10 extends ENRentSystemBase {
         return n"en_fact_mbh10_action_close_and_lock_door";
     }
 
+    public func GetActionUpdateApartmentPurchaseAllowedQuestFact() -> CName {
+        return n"en_fact_action_update_mbh10_purchase_allowed";
+    }
+
+    public func GetActionUpdateHasAvailableDiscountQuestFact() -> CName {
+        return n"en_fact_action_update_mbh10_has_available_discount";
+    }
+
+    public func GetActionSendPurchaseOfferMessageQuestFact() -> CName {
+        return n"en_fact_action_send_purchase_offer_message_mbh10";
+    }
+
+    public func GetActionSendPurchaseCompleteMessageQuestFact() -> CName {
+        return n"en_fact_action_send_purchase_complete_message_mbh10";
+    }
+
+    public final func GetActionDoRentDurationChangedCleanup() -> CName {
+        return n"en_fact_action_do_rent_duration_changed_cleanup_mbh10";
+    }
+
     public final func GetPlayerHasRentMoneyQuestFact() -> CName {
         return n"en_fact_mbh10_player_has_rent_money";
+    }
+
+    public func GetApartmentPurchaseAllowedQuestFact() -> CName {
+        return n"en_fact_mbh10_purchase_allowed";
+    }
+
+    public func GetApartmentPurchaseAvailableQuestFact() -> CName {
+        return n"en_fact_mbh10_purchase_available";
+    }
+
+    public func GetPaidRentCountRequiredForLoyaltyQuestFact() -> CName {
+        return n"en_fact_mbh10_rent_paid_count_req_loyalty_quest";
+    }
+
+    public func GetHasAvailableDiscountQuestFact() -> CName {
+        return n"en_fact_mbh10_has_available_discount";
     }
 
     public func GetCostLateFeePerDay() -> Int32 {
@@ -117,6 +161,10 @@ public final class ENRentSystemMBH10 extends ENRentSystemBase {
         return this.Settings.costH10SecurityDeposit;
     }
 
+    public func GetPurchaseAmount() -> Int32 {
+        return 1000000;
+    }
+
     private final func GetApartmentDebugName() -> String {
         return "Megabuilding H10";
     }
@@ -129,7 +177,46 @@ public final class ENRentSystemMBH10 extends ENRentSystemBase {
         return "$/mod/worldbuildergroup_en_mbh10/#worldbuildergroup_en_mbh10_en_apartment_screen";
     }
 
-    //private final func GetMBH10OriginalApartmentScreenNodeRefPath() -> String {
-    //    return "$/03_night_city/c_watson/little_china/loc_megabuilding_a_prefab4KCU2IQ/loc_megabuilding_a_gameplay_prefab2GWVWSA/#loc_megabuilding_a_devices/{q001_door_v_flat}_prefab4EOA7RA/apartment_screen_1_prefabO4JL7SI";
-    //}
+    private func GetApartmentPurchaseAllowedSettingValue() -> Bool {
+        // TODO - FUTURE
+        return false;
+    }
+
+    private func GetLoyaltyQuestDiscountPctSettingValue() -> Int32 {
+        // TODO - FUTURE
+		return 0;
+    }
+
+    private func GetLoyaltyQuestPath() -> String {
+        return "quests/minor_quest/mbh10_loyaltyquest";
+    }
+
+    private func GetShowApartmentScreenMessageOnPurchase() -> Bool {
+        return false;
+    }
+
+    //
+    // System-Specific Methods
+    //
+    public func GetOutstandingBalance() -> Int32 {
+        let rentState: ENRentState = this.GetRentState();
+
+        if Equals(rentState, ENRentState.Evicted) {
+            // If the player was evicted, to move back in, they must pay:
+            // * All of the late fees for their last cycle
+            // * The outstanding rent
+            // * The agent fee
+            // * (MBH10 Only) If they have never paid a security deposit, they must pay it now.
+            let balance: Int32 = this.GetRentAmount() + (this.GetCostLateFeePerDay() * (this.PropertyStateService.RentalPeriodInDays - 1)) + this.EZEstatesAgentSystem.GetAgentFee();
+            if Equals(this.QuestsSystem.GetFact(ENEZEstatesAgentSystem.Get().GetHasEverMovedBackInToMBH10QuestFact()), 0) {
+                balance += this.GetSecurityDepositAmount();
+            }
+            this.lastOutstandingBalance = balance;
+            //ENLog(this, "    ENRentState.Evicted, balance: " + ToString(this.lastOutstandingBalance));
+
+            return this.lastOutstandingBalance;
+        } else {
+            return super.GetOutstandingBalance();
+        }
+    }
 }

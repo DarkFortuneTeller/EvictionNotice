@@ -106,8 +106,44 @@ public final class ENRentSystemNorthside extends ENRentSystemBase {
         return n"en_fact_northside_action_close_and_lock_door";
     }
 
+    public func GetActionUpdateApartmentPurchaseAllowedQuestFact() -> CName {
+        return n"en_fact_action_update_northside_purchase_allowed";
+    }
+
+    public func GetActionUpdateHasAvailableDiscountQuestFact() -> CName {
+        return n"en_fact_action_update_northside_has_available_discount";
+    }
+
+    public func GetActionSendPurchaseOfferMessageQuestFact() -> CName {
+        return n"en_fact_action_send_purchase_offer_message_northside";
+    }
+
+    public func GetActionSendPurchaseCompleteMessageQuestFact() -> CName {
+        return n"en_fact_action_send_purchase_complete_message_northside";
+    }
+
+    public final func GetActionDoRentDurationChangedCleanup() -> CName {
+        return n"en_fact_action_do_rent_duration_changed_cleanup_northside";
+    }
+
     public final func GetPlayerHasRentMoneyQuestFact() -> CName {
         return n"en_fact_northside_player_has_rent_money";
+    }
+
+    public func GetApartmentPurchaseAllowedQuestFact() -> CName {
+        return n"en_fact_northside_purchase_allowed";
+    }
+
+    public func GetApartmentPurchaseAvailableQuestFact() -> CName {
+        return n"en_fact_northside_purchase_available";
+    }
+
+    public func GetPaidRentCountRequiredForLoyaltyQuestFact() -> CName {
+        return n"en_fact_northside_rent_paid_count_req_loyalty_quest";
+    }
+
+    public func GetHasAvailableDiscountQuestFact() -> CName {
+        return n"en_fact_northside_has_available_discount";
     }
 
     public func GetCostLateFeePerDay() -> Int32 {
@@ -122,6 +158,10 @@ public final class ENRentSystemNorthside extends ENRentSystemBase {
         return FromVariant<Int32>(TweakDBInterface.GetFlat(t"EconomicAssignment.vs_apartment_dlc6_apart_wat_nid.overrideValue"));
     }
 
+    public func GetPurchaseAmount() -> Int32 {
+        return 1000000;
+    }
+
     private final func GetApartmentDebugName() -> String {
         return "Northside";
     }
@@ -134,7 +174,21 @@ public final class ENRentSystemNorthside extends ENRentSystemBase {
         return "$/mod/worldbuildergroup_en_northside/#worldbuildergroup_en_northside_en_motel_screen";
     }
 
-    /*private final func GetApartmentScreenNodeRefPath() -> String {
-        return "$/03_night_city/c_watson/northside/loc_dlc6_apart_wat_nid_prefabGGXQIJI/loc_dlc6_apart_wat_nid_gameplay_prefab7LQTKCI/#loc_dlc6_apart_wat_nid_devices/#dlc6_apart_wat_nid_dvc_motel_screen";
-    }*/
+    private func GetApartmentPurchaseAllowedSettingValue() -> Bool {
+        // TODO - FUTURE
+        return false;
+    }
+
+    private func GetLoyaltyQuestDiscountPctSettingValue() -> Int32 {
+        // TODO - FUTURE
+		return 0;
+    }
+
+    private func GetLoyaltyQuestPath() -> String {
+        return "quests/minor_quest/northside_loyaltyquest";
+    }
+
+    private func GetShowApartmentScreenMessageOnPurchase() -> Bool {
+        return true;
+    }
 }
