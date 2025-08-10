@@ -1,5 +1,5 @@
 // -----------------------------------------------------------------------------
-// ENJournalUtils
+// ENResourceUtils
 // -----------------------------------------------------------------------------
 //
 // - Does special handling of SMS messages when rendered in order to

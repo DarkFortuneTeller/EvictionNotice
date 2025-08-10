@@ -246,7 +246,7 @@ public class ENSettings extends ScriptableSystem {
 	@runtimeProperty("ModSettings.category.order", "50")
 	@runtimeProperty("ModSettings.displayName", "EvictionNoticeSettingCostRentBase")
 	@runtimeProperty("ModSettings.description", "EvictionNoticeSettingCostRentBaseDesc")
-	@runtimeProperty("ModSettings.step", "1000")
+	@runtimeProperty("ModSettings.step", "500")
 	@runtimeProperty("ModSettings.min", "1000")
 	@runtimeProperty("ModSettings.max", "200000")
 	public let costH10Rent: Int32 = 18000;
@@ -291,7 +291,7 @@ public class ENSettings extends ScriptableSystem {
 	@runtimeProperty("ModSettings.category.order", "60")
 	@runtimeProperty("ModSettings.displayName", "EvictionNoticeSettingCostRentBase")
 	@runtimeProperty("ModSettings.description", "EvictionNoticeSettingCostRentBaseDesc")
-	@runtimeProperty("ModSettings.step", "1000")
+	@runtimeProperty("ModSettings.step", "500")
 	@runtimeProperty("ModSettings.min", "1000")
 	@runtimeProperty("ModSettings.max", "200000")
 	public let costNorthsideRent: Int32 = 8000;
@@ -335,7 +335,7 @@ public class ENSettings extends ScriptableSystem {
 	@runtimeProperty("ModSettings.category.order", "70")
 	@runtimeProperty("ModSettings.displayName", "EvictionNoticeSettingCostRentBase")
 	@runtimeProperty("ModSettings.description", "EvictionNoticeSettingCostRentBaseDesc")
-	@runtimeProperty("ModSettings.step", "1000")
+	@runtimeProperty("ModSettings.step", "500")
 	@runtimeProperty("ModSettings.min", "1000")
 	@runtimeProperty("ModSettings.max", "200000")
 	public let costJapantownRent: Int32 = 15000;
@@ -379,7 +379,7 @@ public class ENSettings extends ScriptableSystem {
 	@runtimeProperty("ModSettings.category.order", "80")
 	@runtimeProperty("ModSettings.displayName", "EvictionNoticeSettingCostRentBase")
 	@runtimeProperty("ModSettings.description", "EvictionNoticeSettingCostRentBaseDesc")
-	@runtimeProperty("ModSettings.step", "1000")
+	@runtimeProperty("ModSettings.step", "500")
 	@runtimeProperty("ModSettings.min", "1000")
 	@runtimeProperty("ModSettings.max", "200000")
 	public let costGlenRent: Int32 = 27000;
@@ -450,7 +450,7 @@ public class ENSettings extends ScriptableSystem {
 	@runtimeProperty("ModSettings.category.order", "90")
 	@runtimeProperty("ModSettings.displayName", "EvictionNoticeSettingCostRentBase")
 	@runtimeProperty("ModSettings.description", "EvictionNoticeSettingCostRentBaseDesc")
-	@runtimeProperty("ModSettings.step", "1000")
+	@runtimeProperty("ModSettings.step", "500")
 	@runtimeProperty("ModSettings.min", "1000")
 	@runtimeProperty("ModSettings.max", "200000")
 	public let costCorpoPlazaRent: Int32 = 40000;

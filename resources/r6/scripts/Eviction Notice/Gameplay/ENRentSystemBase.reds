@@ -511,9 +511,12 @@ public abstract class ENRentSystemBase extends ENSystem {
         } else if Equals(rentState, ENRentState.MovedOut) {
             // If the player moved out, to move back in, they must pay:
             // * The security deposit
-            // * One period's rent
+            // * One period's rent (pro-rated)
             // * The agent fee
-            this.lastOutstandingBalance = this.GetSecurityDepositAmount() + this.GetRentAmount() + this.EZEstatesAgentSystem.GetAgentFee();
+            let proRatePercentage: Float = 1.0 - Cast<Float>(this.PropertyStateService.GetDayOfCurrentRentCycle()) / Cast<Float>(this.Settings.rentalPeriodInDays);
+            let proRatedRent: Int32 = CeilF(Cast<Float>(this.GetRentAmount()) * proRatePercentage);
+            
+            this.lastOutstandingBalance = this.GetSecurityDepositAmount() + proRatedRent + this.EZEstatesAgentSystem.GetAgentFee();
             //ENLog(this, "    ENRentState.MovedOut, balance: " + ToString(this.lastOutstandingBalance));
         }
 

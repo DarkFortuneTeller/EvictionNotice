@@ -1,6 +1,10 @@
 module EvictionNotice.Gameplay
 
-import EvictionNotice.System.ENSystemEventListener
+import EvictionNotice.Logging.*
+import EvictionNotice.System.{
+    ENSystem,
+    ENSystemEventListener
+}
 import EvictionNotice.Settings.ENSettings
 import EvictionNotice.Services.ENPropertyStateService
 
@@ -11,6 +15,8 @@ public final class ENRentSystemMBH10EventListeners extends ENRentSystemBaseEvent
 }
 
 public final class ENRentSystemMBH10 extends ENRentSystemBase {
+    private let factListenerQ305JohnnySceneActive: Uint32;
+
     public final static func GetInstance(gameInstance: GameInstance) -> ref<ENRentSystemMBH10> {
 		let instance: ref<ENRentSystemMBH10> = GameInstance.GetScriptableSystemsContainer(gameInstance).Get(NameOf(ENRentSystemMBH10)) as ENRentSystemMBH10;
 		return instance;
@@ -35,6 +41,19 @@ public final class ENRentSystemMBH10 extends ENRentSystemBase {
     private func DoPostResumeActions() -> Void {
         this.SetRequiredPaidAndOccupancyStates();
         this.UnlockApartmentDoor();
+    }
+
+    private func RegisterListeners() -> Void {
+        super.RegisterListeners();
+
+        this.factListenerQ305JohnnySceneActive = this.QuestsSystem.RegisterListener(this.GetQ305JohnnySceneActiveQuestFact(), this, n"OnQ305JohnnySceneActive");
+    }
+
+    private func UnregisterListeners() -> Void {
+        super.UnregisterListeners();
+
+        this.QuestsSystem.UnregisterListener(this.GetQ305JohnnySceneActiveQuestFact(), this.factListenerQ305JohnnySceneActive);
+        this.factListenerQ305JohnnySceneActive = 0u;
     }
 
     //
@@ -149,6 +168,10 @@ public final class ENRentSystemMBH10 extends ENRentSystemBase {
         return n"en_fact_mbh10_has_available_discount";
     }
 
+    public func GetQ305JohnnySceneActiveQuestFact() -> CName {
+        return n"q305_johnny_scene_active";
+    }
+
     public func GetCostLateFeePerDay() -> Int32 {
         return this.Settings.costH10LateFee;
     }
@@ -217,6 +240,20 @@ public final class ENRentSystemMBH10 extends ENRentSystemBase {
             return this.lastOutstandingBalance;
         } else {
             return super.GetOutstandingBalance();
+        }
+    }
+
+    // Q305 - Lock and unlock the door to Megabuilding H10 according to the scene with Johnny.
+    private final func OnQ305JohnnySceneActive(value: Int32) -> Void {
+        ENLog(this, "@@@@@@ Q305 Bugfix - Johnny Scene Active, value: " + ToString(value));
+        if value > 0 {
+            if !this.IsCurrentRentStateRented() {
+                this.UnlockApartmentDoor();
+            }
+        } else if Equals(value, 0) {
+            if !this.IsCurrentRentStateRented() {
+                this.LockApartmentDoor();
+            }
         }
     }
 }
