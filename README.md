@@ -1,5 +1,5 @@
 # Eviction Notice
-A Rent and Eviction System for Cyberpunk 2077.
+Eviction Notice is a fully-featured apartment rent system for Cyberpunk 2077 with new characters to meet (via text) and lightweight quest content.
 
 ## Documentation
 Please see the [Nexus](https://www.nexusmods.com/cyberpunk2077/mods/23187) page.
