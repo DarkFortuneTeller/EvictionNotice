@@ -64,41 +64,77 @@ public final func PushEntries(const data: script_ref<array<wref<JournalEntry>>>)
                 ArrayRemove(entries, entry);
 
         // Base Game - MQ055
+        } else if Equals(id, "01_06a_v_megabuilding") || Equals(id, "02_03a_v_megabuilding") {
+            // Check Megabuilding H10 Rent State
+            rentSystem = ENRentSystemMBH10.Get();
+            if !rentSystem.IsCurrentRentStateOccupied() {
+                ArrayRemove(entries, entry);
+            }
+            
+        } else if Equals(id, "01_06b_v_northside") || Equals(id, "02_03b_v_northside") {
+            // Check Northside Rent State
+            rentSystem = ENRentSystemNorthside.Get();
+            if !rentSystem.IsCurrentRentStateOccupied() {
+                ArrayRemove(entries, entry);
+            }
+
+        } else if Equals(id, "01_06c_v_japantown") || Equals(id, "02_03c_v_japantown") {
+            // Check Japantown Rent State
+            rentSystem = ENRentSystemJapantown.Get();
+            if !rentSystem.IsCurrentRentStateOccupied() {
+                ArrayRemove(entries, entry);
+            }
+
+        } else if Equals(id, "01_06d_v_heywood") || Equals(id, "02_03d_v_heywood") {
+            // Check Glen Rent State
+            rentSystem = ENRentSystemGlen.Get();
+            if !rentSystem.IsCurrentRentStateOccupied() {
+                ArrayRemove(entries, entry);
+            }
+
+        } else if Equals(id, "01_06e_v_downtown") || Equals(id, "02_03e_v_downtown") {
+            // Check Corpo Plaza Rent State
+            rentSystem = ENRentSystemCorpoPlaza.Get();
+            if !rentSystem.IsCurrentRentStateOccupied() {
+                ArrayRemove(entries, entry);
+            }
+        
         // Eviction Notice - EZEstates Move Out
-        } else if Equals(id, "01_06a_v_megabuilding") || Equals(id, "02_03a_v_megabuilding") || Equals(id, "MoveOutSelect_H10") {
+        } else if Equals(id, "MoveOutSelect_H10") {
             // Check Megabuilding H10 Rent State
             rentSystem = ENRentSystemMBH10.Get();
             if !rentSystem.IsCurrentRentStateRented() {
                 ArrayRemove(entries, entry);
             }
-            
-        } else if Equals(id, "01_06b_v_northside") || Equals(id, "02_03b_v_northside") || Equals(id, "MoveOutSelect_Northside") {
+
+        } else if Equals(id, "MoveOutSelect_Northside") {
             // Check Northside Rent State
             rentSystem = ENRentSystemNorthside.Get();
             if !rentSystem.IsCurrentRentStateRented() {
                 ArrayRemove(entries, entry);
             }
-
-        } else if Equals(id, "01_06c_v_japantown") || Equals(id, "02_03c_v_japantown") || Equals(id, "MoveOutSelect_Japantown") {
+        
+        } else if Equals(id, "MoveOutSelect_Japantown") {
             // Check Japantown Rent State
             rentSystem = ENRentSystemJapantown.Get();
             if !rentSystem.IsCurrentRentStateRented() {
                 ArrayRemove(entries, entry);
             }
 
-        } else if Equals(id, "01_06d_v_heywood") || Equals(id, "02_03d_v_heywood") || Equals(id, "MoveOutSelect_Glen") {
+        } else if Equals(id, "MoveOutSelect_Glen") {
             // Check Glen Rent State
             rentSystem = ENRentSystemGlen.Get();
             if !rentSystem.IsCurrentRentStateRented() {
                 ArrayRemove(entries, entry);
             }
 
-        } else if Equals(id, "01_06e_v_downtown") || Equals(id, "02_03e_v_downtown") || Equals(id, "MoveOutSelect_CorpoPlaza") {
+        } else if Equals(id, "MoveOutSelect_CorpoPlaza") {
             // Check Corpo Plaza Rent State
             rentSystem = ENRentSystemCorpoPlaza.Get();
             if !rentSystem.IsCurrentRentStateRented() {
                 ArrayRemove(entries, entry);
             }
+
         
         // Eviction Notice - EZEstates Player Root - Move Out
         } else if Equals(id, "MoveOutSelect_MoveOut") || Equals(id, "MoveOutSelect_MoveOutRepeat") || Equals(id, "RentCycleTimeLeft") {

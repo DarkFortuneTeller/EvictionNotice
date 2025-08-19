@@ -834,6 +834,10 @@ public abstract class ENRentSystemBase extends ENSystem {
         return this.GetRentStateValue(this.rentState) >= this.GetRentStateValue(ENRentState.Paid) && this.GetRentStateValue(this.rentState) < this.GetRentStateValue(ENRentState.MovedOut);
     }
 
+    public final func IsCurrentRentStateOccupied() -> Bool {
+        return Equals(this.GetRentState(), ENRentState.Purchased) || (this.GetRentStateValue(this.rentState) >= this.GetRentStateValue(ENRentState.Paid) && this.GetRentStateValue(this.rentState) < this.GetRentStateValue(ENRentState.MovedOut));
+    }
+
     private final func IsCurrentRentStateWithOutstandingBalance() -> Bool {
         return this.GetRentStateValue(this.rentState) >= this.GetRentStateValue(ENRentState.Due) && this.GetRentStateValue(this.rentState) <= this.GetRentStateValue(ENRentState.OverdueFinalWarning);
     }

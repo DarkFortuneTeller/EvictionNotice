@@ -710,31 +710,31 @@ public final class ENPropertyStateService extends ENSystem {
             this.ReplaceAliasTokenWithNumber(plainTxt, "{EN_ALIAS_COST_H10_BALANCE}", this.MBH10.GetOutstandingBalance(), euroDollar, true);
             this.ReplaceAliasTokenWithNumber(plainTxt, "{EN_ALIAS_COST_H10_LATEFEE}", this.MBH10.GetCostLateFeePerDay(), euroDollar, true);
             this.ReplaceAliasTokenWithNumber(plainTxt, "{EN_ALIAS_COST_H10_DEPOSIT}", this.MBH10.GetSecurityDepositAmount(), euroDollar, true);
-            this.ReplaceAliasTokenWithNumber(plainTxt, "{EN_ALIAS_COST_PURCHASE_MBH10}", this.MBH10.GetPurchaseAmount(), euroDollar, true);
+            this.ReplaceAliasTokenWithNumber(plainTxt, "{EN_ALIAS_COST_PURCHASE_MBH10}", this.EZEstates.GetPurchaseCostForProperty(EnumInt<ENRentalProperty>(ENRentalProperty.MegabuildingH10)), euroDollar, true);
 
             this.ReplaceAliasTokenWithNumber(plainTxt, "{EN_ALIAS_COST_NORTHSIDE_BALANCE_NOLATEFEE}", this.Northside.GetRentAmount(), euroDollar, true);
             this.ReplaceAliasTokenWithNumber(plainTxt, "{EN_ALIAS_COST_NORTHSIDE_BALANCE}", this.Northside.GetOutstandingBalance(), euroDollar, true);
             this.ReplaceAliasTokenWithNumber(plainTxt, "{EN_ALIAS_COST_NORTHSIDE_LATEFEE}", this.Northside.GetCostLateFeePerDay(), euroDollar, true);
             this.ReplaceAliasTokenWithNumber(plainTxt, "{EN_ALIAS_COST_NORTHSIDE_DEPOSIT}", this.Northside.GetSecurityDepositAmount(), euroDollar, true);
-            this.ReplaceAliasTokenWithNumber(plainTxt, "{EN_ALIAS_COST_PURCHASE_NORTHSIDE}", this.Northside.GetPurchaseAmount(), euroDollar, true);
+            this.ReplaceAliasTokenWithNumber(plainTxt, "{EN_ALIAS_COST_PURCHASE_NORTHSIDE}", this.EZEstates.GetPurchaseCostForProperty(EnumInt<ENRentalProperty>(ENRentalProperty.Northside)), euroDollar, true);
 
             this.ReplaceAliasTokenWithNumber(plainTxt, "{EN_ALIAS_COST_JAPANTOWN_BALANCE_NOLATEFEE}", this.Japantown.GetRentAmount(), euroDollar, true);
             this.ReplaceAliasTokenWithNumber(plainTxt, "{EN_ALIAS_COST_JAPANTOWN_BALANCE}", this.Japantown.GetOutstandingBalance(), euroDollar, true);
             this.ReplaceAliasTokenWithNumber(plainTxt, "{EN_ALIAS_COST_JAPANTOWN_LATEFEE}", this.Japantown.GetCostLateFeePerDay(), euroDollar, true);
             this.ReplaceAliasTokenWithNumber(plainTxt, "{EN_ALIAS_COST_JAPANTOWN_DEPOSIT}", this.Japantown.GetSecurityDepositAmount(), euroDollar, true);
-            this.ReplaceAliasTokenWithNumber(plainTxt, "{EN_ALIAS_COST_PURCHASE_JAPANTOWN}", this.Japantown.GetPurchaseAmount(), euroDollar, true);
+            this.ReplaceAliasTokenWithNumber(plainTxt, "{EN_ALIAS_COST_PURCHASE_JAPANTOWN}", this.EZEstates.GetPurchaseCostForProperty(EnumInt<ENRentalProperty>(ENRentalProperty.Japantown)), euroDollar, true);
 
             this.ReplaceAliasTokenWithNumber(plainTxt, "{EN_ALIAS_COST_GLEN_BALANCE_NOLATEFEE}", this.Glen.GetRentAmount(), euroDollar, true);
             this.ReplaceAliasTokenWithNumber(plainTxt, "{EN_ALIAS_COST_GLEN_BALANCE}", this.Glen.GetOutstandingBalance(), euroDollar, true);
             this.ReplaceAliasTokenWithNumber(plainTxt, "{EN_ALIAS_COST_GLEN_LATEFEE}", this.Glen.GetCostLateFeePerDay(), euroDollar, true);
             this.ReplaceAliasTokenWithNumber(plainTxt, "{EN_ALIAS_COST_GLEN_DEPOSIT}", this.Glen.GetSecurityDepositAmount(), euroDollar, true);
-            this.ReplaceAliasTokenWithNumber(plainTxt, "{EN_ALIAS_COST_PURCHASE_GLEN}", this.Glen.GetPurchaseAmount(), euroDollar, true);
+            this.ReplaceAliasTokenWithNumber(plainTxt, "{EN_ALIAS_COST_PURCHASE_GLEN}", this.EZEstates.GetPurchaseCostForProperty(EnumInt<ENRentalProperty>(ENRentalProperty.Glen)), euroDollar, true);
 
             this.ReplaceAliasTokenWithNumber(plainTxt, "{EN_ALIAS_COST_CORPOPLAZA_BALANCE_NOLATEFEE}", this.CorpoPlaza.GetRentAmount(), euroDollar, true);
             this.ReplaceAliasTokenWithNumber(plainTxt, "{EN_ALIAS_COST_CORPOPLAZA_BALANCE}", this.CorpoPlaza.GetOutstandingBalance(), euroDollar, true);
             this.ReplaceAliasTokenWithNumber(plainTxt, "{EN_ALIAS_COST_CORPOPLAZA_LATEFEE}", this.CorpoPlaza.GetCostLateFeePerDay(), euroDollar, true);
             this.ReplaceAliasTokenWithNumber(plainTxt, "{EN_ALIAS_COST_CORPOPLAZA_DEPOSIT}", this.CorpoPlaza.GetSecurityDepositAmount(), euroDollar, true);
-            this.ReplaceAliasTokenWithNumber(plainTxt, "{EN_ALIAS_COST_PURCHASE_CORPOPLAZA}", this.CorpoPlaza.GetPurchaseAmount(), euroDollar, true);
+            this.ReplaceAliasTokenWithNumber(plainTxt, "{EN_ALIAS_COST_PURCHASE_CORPOPLAZA}", this.EZEstates.GetPurchaseCostForProperty(EnumInt<ENRentalProperty>(ENRentalProperty.CorpoPlaza)), euroDollar, true);
 
             this.ReplaceAliasTokenWithNumber(plainTxt, "{EN_ALIAS_COST_EZBOB_FEE}", this.EZEstates.GetAgentFee(), euroDollar, true);
             this.ReplaceAliasTokenWithNumber(plainTxt, "{EN_ALIAS_COST_SELECTED_MOVE_IN}", this.EZEstates.GetOutstandingBalanceForProperty(this.GetPendingMoveInApartmentID()), euroDollar, true);

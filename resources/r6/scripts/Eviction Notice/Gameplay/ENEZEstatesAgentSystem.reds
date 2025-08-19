@@ -209,7 +209,13 @@ public class ENEZEstatesAgentSystem extends ENSystem {
     public final func GetPurchaseCostForProperty(apartmentID: Int32) -> Int32 {
         let apartment: ENRentalProperty = this.PropertyStateService.GetRentalPropertyByID(apartmentID);
         let rentSystem: ref<ENRentSystemBase> = this.PropertyStateService.GetRentalSystemFromRentalProperty(apartment);
-        return rentSystem.GetPurchaseAmount();
+        let baseCost: Int32 = rentSystem.GetPurchaseAmount();
+        
+        if rentSystem.IsCurrentRentStateRented() || Equals(rentSystem.GetRentState(), ENRentState.Evicted) {
+            return baseCost - rentSystem.GetSecurityDepositAmount();
+        } else {
+            return baseCost;
+        }
     }
 
     private final func OnTryToDoMoveInToPending(value: Int32) -> Void {
